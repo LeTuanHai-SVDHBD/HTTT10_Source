@@ -1,0 +1,63 @@
+{
+  "passed": 14,
+  "total": 14,
+  "tests": [
+    {
+      "name": "Chủ lịch mở biểu mẫu sửa từ phiên bản hiện tại",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry gửi sửa giữ nguyên key sau commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Đề nghị sửa hiển thị so sánh gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản sửa chờ vẫn giữ phòng gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt chấp thuận bản sửa qua giao diện",
+      "status": "PASS"
+    },
+    {
+      "name": "Chủ lịch xem lại nội dung phiên bản cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Receipt hủy họp proposal null được xử lý đúng",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry hủy họp giữ nguyên key",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch đã hủy không còn nút sửa hoặc hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Đề nghị hủy công tác hiển thị base khi candidate null",
+      "status": "PASS"
+    },
+    {
+      "name": "Chờ duyệt hủy vẫn giữ công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt chấp thuận hủy công tác qua giao diện",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ vẫn xem lịch sử khi bản mới riêng tư đã hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch sử không lộ bản mới hoặc quyền sửa hủy",
+      "status": "PASS"
+    }
+  ],
+  "scope": "React 19.1.1 + JSDOM 26.1.0 + real HTTP/FastAPI/MySQL. CHANGE review, historical revisions, meeting direct cancellation, WORK cancellation proposal and lost committed responses. No browser layout/Docker/LAN verification."
+}

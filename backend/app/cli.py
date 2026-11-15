@@ -10,7 +10,13 @@ from .security import HASHER
 from .services import audit
 def config():return Config(str(Path(__file__).resolve().parents[1]/'alembic.ini'))
 def main():
-    p=argparse.ArgumentParser();p.add_argument('action',choices=['migrate','adopt-baseline','bootstrap']);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('action',choices=['migrate','adopt-baseline','bootstrap','expire-proposals','document-storage-cleanup']);p.add_argument('--apply',action='store_true');a=p.parse_args()
+    if a.action=='document-storage-cleanup':
+        from .document_storage import cleanup
+        print(json.dumps(cleanup(apply=a.apply)));return
+    if a.action=='expire-proposals':
+        from .scheduling import expire_due
+        print('Expired proposals:',expire_due());return
     if a.action=='migrate':command.upgrade(config(),'head');print('Migration complete.');return
     if a.action=='adopt-baseline':
         expected=json.loads((Path(__file__).resolve().parents[1]/'db/schema_metadata.json').read_text());i=inspect(engine)

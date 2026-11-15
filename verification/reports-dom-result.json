@@ -1,0 +1,47 @@
+{
+  "passed": 10,
+  "total": 10,
+  "tests": [
+    {
+      "name": "Nhân viên không có mục báo cáo",
+      "status": "PASS"
+    },
+    {
+      "name": "Người phụ trách xem được báo cáo trong phạm vi",
+      "status": "PASS"
+    },
+    {
+      "name": "Giao diện hiển thị một xác nhận và một hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ họp và giờ đệm tách riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhãn báo cáo không khẳng định sử dụng thực tế",
+      "status": "PASS"
+    },
+    {
+      "name": "Khoảng sai không giữ kết quả cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin thấy số liệu tổng hợp, không có nội dung lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Liên kết email mở đúng đề nghị sau đăng nhập",
+      "status": "PASS"
+    },
+    {
+      "name": "Liên kết không giữ token hoặc ID trên URL sau mở",
+      "status": "PASS"
+    },
+    {
+      "name": "Liên kết lịch kiểm tra quyền người tham gia",
+      "status": "PASS"
+    }
+  ],
+  "scope": "React JSDOM + real HTTP/MySQL; role navigation, planned metrics, clearing invalid results and authenticated email links. Not real browser layout/Windows/Docker/LAN."
+}

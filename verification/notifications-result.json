@@ -1,0 +1,264 @@
+{
+  "passed": 64,
+  "total": 64,
+  "tests": [
+    {
+      "name": "SMTP mặc định không gửi thư",
+      "status": "PASS"
+    },
+    {
+      "name": "Thiếu host",
+      "status": "PASS"
+    },
+    {
+      "name": "URL không hợp lệ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không chấp nhận plain ngầm",
+      "status": "PASS"
+    },
+    {
+      "name": "Mật khẩu không có trong repr cấu hình",
+      "status": "PASS"
+    },
+    {
+      "name": "Disable giữ nguyên hàng chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không đổi trạng thái khi disabled",
+      "status": "PASS"
+    },
+    {
+      "name": "SMTP thật TCP ngoài transaction khóa SQL",
+      "status": "PASS"
+    },
+    {
+      "name": "Một delivery gửi đúng một thư",
+      "status": "PASS"
+    },
+    {
+      "name": "Một địa chỉ người nhận",
+      "status": "PASS"
+    },
+    {
+      "name": "Email có liên kết đăng nhập đúng hồ sơ",
+      "status": "PASS"
+    },
+    {
+      "name": "Email không có nội dung lịch riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Email không đính kèm tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Attempt được ghi SMTP_ACCEPTED",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi lại delivery đã được nhận",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tạo SMTP lần hai",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi SMTP lần 1",
+      "status": "PASS"
+    },
+    {
+      "name": "Số lần gửi 1",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ lưu mã lỗi an toàn 1",
+      "status": "PASS"
+    },
+    {
+      "name": "Hẹn lại từ lỗi đầu 1",
+      "status": "PASS"
+    },
+    {
+      "name": "Chưa đến hạn không gửi 1",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi SMTP lần 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Số lần gửi 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ lưu mã lỗi an toàn 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Hẹn lại từ lỗi đầu 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Chưa đến hạn không gửi 2",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi SMTP lần 3",
+      "status": "PASS"
+    },
+    {
+      "name": "Số lần gửi 3",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ lưu mã lỗi an toàn 3",
+      "status": "PASS"
+    },
+    {
+      "name": "Hẹn lại từ lỗi đầu 3",
+      "status": "PASS"
+    },
+    {
+      "name": "Chưa đến hạn không gửi 3",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi SMTP lần 4",
+      "status": "PASS"
+    },
+    {
+      "name": "Số lần gửi 4",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ lưu mã lỗi an toàn 4",
+      "status": "PASS"
+    },
+    {
+      "name": "Bốn lần lỗi kết thúc FAILED",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ phản hồi SMTP vào DB",
+      "status": "PASS"
+    },
+    {
+      "name": "Đủ bốn attempt lưu vết",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi lần thứ năm",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi thông báo chờ đã bị rút",
+      "status": "PASS"
+    },
+    {
+      "name": "Bỏ qua stale có mã lý do",
+      "status": "PASS"
+    },
+    {
+      "name": "Bỏ qua trước gửi không tạo attempt",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi cho tài khoản khóa",
+      "status": "PASS"
+    },
+    {
+      "name": "Thu hồi scope ngăn gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Lý do ngoài quyền không có dữ liệu riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Kiểm tra lại người nhận ngay trước SMTP",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi email sau claim không gửi địa chỉ cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai worker chỉ một claim delivery",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi trùng khi hai worker cạnh tranh",
+      "status": "PASS"
+    },
+    {
+      "name": "QUIT lỗi sau DATA accepted không tạo retry",
+      "status": "PASS"
+    },
+    {
+      "name": "QUIT lỗi vẫn lưu accepted",
+      "status": "PASS"
+    },
+    {
+      "name": "Crash sau SMTP giữ attempt chưa rõ kết quả",
+      "status": "PASS"
+    },
+    {
+      "name": "Lease hết hạn được thu hồi",
+      "status": "PASS"
+    },
+    {
+      "name": "Attempt cũ được đánh dấu UNKNOWN",
+      "status": "PASS"
+    },
+    {
+      "name": "Thử lại sau crash có thể gửi lại",
+      "status": "PASS"
+    },
+    {
+      "name": "Message-ID ổn định qua lần thử lại",
+      "status": "PASS"
+    },
+    {
+      "name": "Ghi nhận giới hạn có thể trùng sau crash",
+      "status": "PASS"
+    },
+    {
+      "name": "Worker cũ không ghi đè lease mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Đúng audience SCHEDULE_RELEASED",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ thông tin phòng/người mới trong email SCHEDULE_RELEASED",
+      "status": "PASS"
+    },
+    {
+      "name": "Đúng audience PROPOSAL_APPROVED",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ thông tin phòng/người mới trong email PROPOSAL_APPROVED",
+      "status": "PASS"
+    },
+    {
+      "name": "SMTP không thay đổi trạng thái lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Tóm tắt thư đã gửi chỉ cho người gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi được phân loại không có raw text",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "Real MySQL + loopback TCP SMTP receiver. Claims, permission/address/status rechecks, retry 1/5/15 minutes, concurrent workers, expired leases, crash ambiguity and stable Message-ID. No real external mailbox/TLS provider/Windows/Docker/LAN verification."
+}

@@ -74,10 +74,11 @@ check('Mật khẩu được băm Argon2, không plain text',lambda:equal((hashe
 limiter.entries.clear()
 for _ in range(10):login('wrong')
 check('Rate limit lần 11 trả 429 và Retry-After',lambda:equal((login('wrong').status_code,login('wrong').headers.get('Retry-After')),(429,'60')))
-check('API thật chỉ công bố 6 operation mốc A',lambda:equal(sum(len(v) for v in app.openapi()['paths'].values()),6))
+check('API giữ đủ 6 operation nền mốc A',lambda:equal(all(p in app.openapi()['paths'] for p in ['/api/v1/auth/login','/api/v1/auth/me','/api/v1/auth/logout','/api/v1/auth/password','/api/v1/health/live','/api/v1/health/ready']),True))
 with Session() as s:
  check('Lưu audit của các thao tác tài khoản',lambda:equal(s.scalar(text("SELECT COUNT(DISTINCT action) FROM audit_entries WHERE action IN ('BOOTSTRAP_ADMIN','LOGIN','LOGOUT','PASSWORD_CHANGED')")),4))
 out={'passed':len(results),'total':len(results),'tests':results,'mysql_version':engine.connect().execute(text('SELECT VERSION()')).scalar(),'scope':'FastAPI ASGI + MySQL integration, not Docker/Windows/browser','frontend_build':'verified separately'}
-(ROOT/'verification/auth-result.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))
+result_dir=Path(os.getenv('TEST_RESULT_DIR',str(ROOT/'verification')));result_dir.mkdir(parents=True,exist_ok=True)
+(result_dir/'auth-result.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))
 print(json.dumps({'passed':out['passed'],'total':out['total']}))
 engine.dispose()

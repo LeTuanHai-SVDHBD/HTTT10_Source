@@ -2,21 +2,30 @@ import logging,time,threading
 from collections import OrderedDict,deque
 from uuid import uuid4
 from fastapi import FastAPI,Depends,Request,Response
-from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError,IntegrityError,OperationalError
 from .db import engine
-from .services import AuthService,Failure
+from .services import Failure
 from .schemas import LoginInput,PasswordChange,TokenResponse,CurrentUser,HealthView
-app=FastAPI(title='HTTT10 - Mốc A',version='0.1.0',description='Chỉ auth và health đã cài đặt. Hợp đồng toàn dự án nằm trong docs/contracts. Các API lịch sẽ bổ sung ở mốc B-F.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
-bearer=HTTPBearer(auto_error=False);service=AuthService()
-def error(request,status,code,message,fields=None):
+from .dependencies import identity,service
+from .catalog_routes import router as catalog_router
+from .scheduling_routes import router as scheduling_router
+from .document_routes import router as document_router
+from .reports import router as report_router
+from .schedule_jobs import lifespan
+app=FastAPI(title='HTTT10 - Lịch công tác',version='1.0.0',lifespan=lifespan,description='Tài khoản, danh mục, lịch, gửi/duyệt/rút CREATE/CHANGE/CANCEL, hủy họp. Tài liệu họp theo phiên bản lịch. Worker SMTP và báo cáo sử dụng theo kế hoạch.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
+app.include_router(catalog_router)
+app.include_router(scheduling_router)
+app.include_router(document_router)
+app.include_router(report_router)
+def error(request,status,code,message,fields=None,**details):
     headers={'Cache-Control':'no-store'}
     if status==401:headers['WWW-Authenticate']='Bearer'
     if status==429:headers['Retry-After']='60'
-    return JSONResponse(status_code=status,headers=headers,content={'request_id':request.state.request_id,'error':{'code':code,'message':message,'field_errors':fields or [],'conflicts':[],'warnings':[],'warning_acknowledgement_token':None,'expiration_committed':False}})
+    return JSONResponse(status_code=status,headers=headers,content=jsonable_encoder({'request_id':request.state.request_id,'error':{'code':code,'message':message,'field_errors':fields or [],'conflicts':[],'warnings':[],'warning_acknowledgement_token':None,'expiration_committed':False,**details}}))
 @app.middleware('http')
 async def request_id(request,call_next):
     request.state.request_id=str(uuid4())
@@ -27,14 +36,20 @@ async def request_id(request,call_next):
     response.headers['X-Request-ID']=request.state.request_id;response.headers['Cache-Control']='no-store'
     return response
 @app.exception_handler(Failure)
-async def failure(request,exc):return error(request,exc.status,exc.code,exc.message)
+async def failure(request,exc):return error(request,exc.status,exc.code,exc.message,**exc.details)
 @app.exception_handler(RequestValidationError)
 async def validation(request,exc):return error(request,422,'VALIDATION_ERROR','Dữ liệu chưa hợp lệ.',[{'path':'.'.join(map(str,e['loc'])),'code':e['type']} for e in exc.errors()])
+@app.exception_handler(IntegrityError)
+async def constraint_error(request,exc):
+    code=getattr(exc.orig,'args',[None])[0]
+    if code==1062:return error(request,409,'DUPLICATE_VALUE','Mã, email hoặc mốc hiệu lực đã tồn tại. Vui lòng kiểm tra lại.')
+    return error(request,409,'CONSTRAINT_VIOLATION','Dữ liệu đang được tham chiếu hoặc không đáp ứng ràng buộc.')
+@app.exception_handler(OperationalError)
+async def operational_error(request,exc):
+    if getattr(exc.orig,'args',[None])[0] in (1205,1213):return error(request,409,'CONCURRENT_UPDATE','Có thao tác đồng thời. Vui lòng tải lại và thử lại.')
+    return error(request,503,'TEMPORARY_UNAVAILABLE','Cơ sở dữ liệu chưa sẵn sàng.')
 @app.exception_handler(SQLAlchemyError)
 async def database_error(request,exc):return error(request,503,'TEMPORARY_UNAVAILABLE','Cơ sở dữ liệu chưa sẵn sàng.')
-def identity(credentials:HTTPAuthorizationCredentials|None=Depends(bearer)):
-    if credentials is None:raise Failure(401,'SESSION_INVALID','Vui lòng đăng nhập.')
-    return service.identity(credentials.credentials)
 class LoginLimiter:
     def __init__(self):self.lock=threading.Lock();self.entries=OrderedDict()
     def check(self,key):

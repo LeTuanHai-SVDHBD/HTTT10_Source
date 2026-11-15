@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "passed": 538,
+  "total": 538,
+  "suites": [
+    {
+      "suite": "auth",
+      "passed": 28,
+      "total": 28
+    },
+    {
+      "suite": "catalog",
+      "passed": 83,
+      "total": 83
+    },
+    {
+      "suite": "scheduling",
+      "passed": 105,
+      "total": 105
+    },
+    {
+      "suite": "amendments",
+      "passed": 111,
+      "total": 111
+    },
+    {
+      "suite": "documents",
+      "passed": 104,
+      "total": 104
+    },
+    {
+      "suite": "reports",
+      "passed": 43,
+      "total": 43
+    },
+    {
+      "suite": "notifications",
+      "passed": 64,
+      "total": 64
+    }
+  ],
+  "scope": "Isolated MySQL + FastAPI ASGI and loopback SMTP. Not a real external mailbox, browser, Docker Desktop or LAN acceptance result."
+}

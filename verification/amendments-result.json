@@ -1,0 +1,452 @@
+{
+  "passed": 111,
+  "total": 111,
+  "tests": [
+    {
+      "name": "Chủ lịch có các thao tác sửa và hủy họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tham gia không được quản lý lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Người ngoài không gửi đề nghị sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi sửa bằng phiên bản root cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gửi sửa bằng base revision sai",
+      "status": "PASS"
+    },
+    {
+      "name": "Đề nghị sửa được lưu PENDING",
+      "status": "PASS"
+    },
+    {
+      "name": "Gửi sửa giữ current revision cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Gửi sửa chưa giữ phòng mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Gửi sửa tăng phiên bản aggregate",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ một đề nghị chờ cho mỗi lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch có bản sửa chờ vẫn được hủy họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry gửi sửa không tạo revision mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry gửi sửa chỉ có hai revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng cũ không đọc bản sửa phòng mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tham gia cũ không đọc bản sửa riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng mới đọc bản sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "So sánh gốc không lộ mô tả/thành phần cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "So sánh đánh dấu đúng nhóm thay đổi",
+      "status": "PASS"
+    },
+    {
+      "name": "Người mới chỉ thấy root bận trước duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Người mới được xem đề nghị liên quan",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng cũ không thấy bản sửa trong hộp duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng cũ không được duyệt thay phòng mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng mới chấp thuận",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt đổi current nguyên tử sang bản mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ còn một phiên bản hiệu lực của root",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng cũ được giải phóng sau duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ mất bận do lịch này",
+      "status": "PASS"
+    },
+    {
+      "name": "Người mới có bận sau duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ không đọc root chi tiết sau thay đổi",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng cũ không lấy revision mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng cũ vẫn xem được bản lịch sử cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit phòng cũ chỉ thông báo giải phóng chỗ",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit phòng cũ không lộ nội dung hoặc revision mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Thông báo giải phóng gắn revision cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Thông báo giải phóng đến người cũ/phòng cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Thông báo giải phóng không cấp nội dung mới cho người mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry duyệt sửa không tạo thông báo lần nữa",
+      "status": "PASS"
+    },
+    {
+      "name": "Mỗi đề nghị chỉ một event giải phóng",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản mới bị hủy không mở root riêng tư cho người cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ vẫn tra cứu được revision cũ sau hủy bản mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối bản sửa được xử lý",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối bản sửa giữ current cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Rút bản sửa được xử lý",
+      "status": "PASS"
+    },
+    {
+      "name": "Rút bản sửa giữ lịch gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Revision không tái dùng số sau bản sửa bị từ chối/rút",
+      "status": "PASS"
+    },
+    {
+      "name": "Không chuyển họp thành công tác khi sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỗ mới bị duyệt giữ trong lúc chờ chặn sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "Xung đột không tự từ chối đề nghị sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "Mất chỗ mới vẫn giữ chỗ gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Có đề nghị chờ không nhận bản sửa khác",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngay lúc gửi cũng chặn nếu chỗ mới đã giữ",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi sang sớm hơn hết hạn theo giờ mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi sang muộn hơn vẫn hết hạn theo giờ gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt bản sửa đến hạn ghi EXPIRED",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản sửa hết hạn không bỏ lịch gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tham gia không hủy họp thay người tạo",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp cần lý do",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp trả receipt không có proposal mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp giữ current cho lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp giải phóng phòng và đệm",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp giải phóng bận của người",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp đồng thời vô hiệu bản sửa chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không duyệt lại bản sửa để khôi phục lịch hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Root đã hủy ngoài quyền trả 404",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch hủy không còn thao tác sửa/hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry hủy họp trả lại receipt cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry hủy không nhân đôi event",
+      "status": "PASS"
+    },
+    {
+      "name": "Lý do hủy họp được lưu",
+      "status": "PASS"
+    },
+    {
+      "name": "Công tác có đề nghị hủy, không hủy trực tiếp",
+      "status": "PASS"
+    },
+    {
+      "name": "Không dùng đường hủy họp cho công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Gửi hủy công tác trả 201",
+      "status": "PASS"
+    },
+    {
+      "name": "Chờ hủy công tác vẫn có hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Đề nghị hủy không tạo revision giả",
+      "status": "PASS"
+    },
+    {
+      "name": "CANCEL trả candidate null và base comparison",
+      "status": "PASS"
+    },
+    {
+      "name": "Đề nghị hủy và sửa loại trừ nhau",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tự duyệt hủy công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Không có phạm vi không duyệt hủy công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối hủy giữ công tác hoạt động",
+      "status": "PASS"
+    },
+    {
+      "name": "Sau từ chối hủy công tác vẫn hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Rút hủy công tác không vi phạm CHECK reason",
+      "status": "PASS"
+    },
+    {
+      "name": "Rút hủy không giải phóng công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Lý do hủy ban đầu có lịch sử riêng không bị ghi đè",
+      "status": "PASS"
+    },
+    {
+      "name": "Chấp thuận hủy công tác thành công",
+      "status": "PASS"
+    },
+    {
+      "name": "Chấp thuận hủy mới giải phóng bận",
+      "status": "PASS"
+    },
+    {
+      "name": "Lý do hủy công tác lấy từ đề nghị đã gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry duyệt hủy không bị lịch đã hủy chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry gửi hủy sau khi lịch đã hủy vẫn trả ID cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Sửa công tác cũng giữ nguyên bản gốc trong lúc chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt sửa công tác thành công",
+      "status": "PASS"
+    },
+    {
+      "name": "Sửa công tác áp dụng địa điểm mới sau duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tự chuyển phòng ban của lịch sử công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Sweep hết hạn xử lý cả CHANGE và CANCEL",
+      "status": "PASS"
+    },
+    {
+      "name": "CHANGE hết hạn giữ lịch gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "CANCEL hết hạn không hủy công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "CANCEL hết hạn có reason hợp lệ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không hủy họp đã bắt đầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Không sửa lịch gốc đã bắt đầu dù giờ mới còn xa",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi khi duyệt sửa giữ current gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi khi duyệt sửa giữ PENDING",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi hủy họp hoàn tác trạng thái hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi hủy họp hoàn tác cả việc vô hiệu bản sửa",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai gửi sửa đồng thời chỉ một đề nghị được lưu",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai gửi sửa không tạo hai revision mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt sửa và hủy họp cạnh tranh chỉ một thắng",
+      "status": "PASS"
+    },
+    {
+      "name": "Không khôi phục lịch đã hủy bằng bản sửa cạnh tranh",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai đổi phòng ngược chiều hợp lệ cùng hoàn thành",
+      "status": "PASS"
+    },
+    {
+      "name": "Cả hai root chỉ có một current revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai bản sửa tranh cùng chỗ mới chỉ một được duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản sửa thua vẫn giữ lịch cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không mất bất kỳ lịch gốc nào ngoài bản thay thế",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI hiện công bố 50 thao tác",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "Real MySQL + FastAPI ASGI, CHANGE/CANCEL creation/decisions/direct meeting cancellation, privacy/expiry/rollback/concurrency; no SMTP/browser/Docker Windows/LAN"
+}

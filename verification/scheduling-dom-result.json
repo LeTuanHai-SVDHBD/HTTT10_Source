@@ -1,0 +1,47 @@
+{
+  "passed": 10,
+  "total": 10,
+  "tests": [
+    {
+      "name": "Nhân viên thấy nút tạo yêu cầu và không có tab quản trị",
+      "status": "PASS"
+    },
+    {
+      "name": "Kiểm tra phương án qua HTTP/MySQL thật",
+      "status": "PASS"
+    },
+    {
+      "name": "Mất phản hồi sau commit hiện thao tác thử lại",
+      "status": "PASS"
+    },
+    {
+      "name": "Thử lại giữ nguyên khóa chống lặp",
+      "status": "PASS"
+    },
+    {
+      "name": "Hồ sơ đã lưu vẫn chờ duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt xác nhận lịch bằng giao diện",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch đã duyệt xuất hiện ở hồ sơ lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Hồ sơ hiện lịch sử xử lý",
+      "status": "PASS"
+    },
+    {
+      "name": "HTTP 503 sau commit cũng giữ nguyên key khi thử lại",
+      "status": "PASS"
+    },
+    {
+      "name": "Người gửi rút yêu cầu trên giao diện",
+      "status": "PASS"
+    }
+  ],
+  "scope": "React 19.1.1 + JSDOM 26.1.0 + actual HTTP proxy/FastAPI/MySQL; includes response loss after commit. No browser CSS/layout/Docker/LAN verification."
+}

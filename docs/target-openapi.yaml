@@ -10071,6 +10071,11 @@ components:
     RoomApproversView:
       additionalProperties: false
       properties:
+        pending_proposal_count:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Số yêu cầu còn chờ trong phạm vi, không kèm nội dung riêng
         room_id:
           format: uuid
           title: Room Id
@@ -10093,6 +10098,11 @@ components:
     DepartmentApproversView:
       additionalProperties: false
       properties:
+        pending_proposal_count:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Số yêu cầu còn chờ trong phạm vi, không kèm nội dung riêng
         department_id:
           format: uuid
           title: Department Id

@@ -5,7 +5,8 @@ from .db import Session
 from .models import User,UserRole,AuthSession
 from . import security as sec
 class Failure(Exception):
-    def __init__(self,status,code,message):self.status=status;self.code=code;self.message=message
+    def __init__(self,status,code,message,**details):
+        self.status=status;self.code=code;self.message=message;self.details=details
 def audit(db,actor,action):
     db.execute(text("INSERT INTO audit_entries(id,actor_user_id,action,entity_type,entity_id,safe_metadata) VALUES(:id,:actor,:action,'user',:actor,JSON_OBJECT())"),{'id':str(uuid4()),'actor':actor,'action':action})
 class AuthService:
