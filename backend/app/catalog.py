@@ -1,8 +1,8 @@
-"""Milestone B: catalog administration and privacy-safe calendar queries.
+"""Catalog administration and privacy-safe calendar queries.
 
 All values are bound parameters. Baseline tables remain canonical; no parallel
 create_all schema. Administrative writes serialize on the baseline ledger row,
-then lock the resource and affected users. Schedule approval (milestone C) must
+then lock the resource and affected users. Schedule approval commands
 lock the same room row before checking its policy and availability.
 """
 import hashlib

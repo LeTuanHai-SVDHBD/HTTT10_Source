@@ -1,4 +1,4 @@
-"""Milestone D: CREATE/CHANGE/CANCEL, resource locking, receipts and safe reads.
+"""CREATE/CHANGE/CANCEL, resource locking, receipts and safe reads.
 
 Commands share the baseline schema and READ COMMITTED transaction. Explicit
 lock order is idempotency -> root -> proposal -> room -> department -> users

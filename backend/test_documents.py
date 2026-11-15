@@ -989,7 +989,7 @@ check("Cleanup dọn orphan quá hạn", storage.cleanup(apply=True)["removed"],
 check("Cleanup giữ byte có DB và tệp mới", ref.exists() and fresh.exists())
 check("Cleanup không xóa lịch sử ẩn", download(latest, "OPT").status_code, 200)
 check(
-    "OpenAPI đủ 49 thao tác", sum(len(v) for v in app.openapi()["paths"].values()), 49
+    "OpenAPI đủ 50 thao tác", sum(len(v) for v in app.openapi()["paths"].values()), 50
 )
 check(
     "OpenAPI upload trả DocumentVersionView",

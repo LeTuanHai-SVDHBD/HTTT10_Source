@@ -35,6 +35,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+  worker:
+    build: ./backend
+    environment:
+      <<: *backend_env
+      SMTP_ENABLED: ${SMTP_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_MODE: ${SMTP_MODE:-starttls}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+    command: ["python", "-m", "app.email_worker"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
   web:
     build: ./frontend
     ports: ["8080:80"]

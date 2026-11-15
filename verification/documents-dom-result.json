@@ -1,6 +1,6 @@
 {
-  "passed": 13,
-  "total": 13,
+  "passed": 15,
+  "total": 15,
   "tests": [
     {
       "name": "Chủ lịch tải tài liệu lên qua FormData thật",
@@ -44,6 +44,14 @@
     },
     {
       "name": "Họp đã hủy chỉ xem tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ tải tệp cũ khi bản mới riêng tư vẫn đang có hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ nội dung bản mới đang hoạt động",
       "status": "PASS"
     },
     {

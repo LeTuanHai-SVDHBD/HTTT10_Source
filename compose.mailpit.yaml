@@ -1,0 +1,17 @@
+# Optional local inbox, never forwards mail to real recipients.
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["127.0.0.1:8025:8025"]
+  worker:
+    environment:
+      SMTP_ENABLED: "true"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_MODE: plain
+      SMTP_ALLOW_PLAIN: "true"
+      SMTP_FROM: calendar@example.com
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+    depends_on:
+      mailpit: {condition: service_started}

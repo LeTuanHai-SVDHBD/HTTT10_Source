@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Documents } from "./documents";
 import { stamp, commandKey, localInput, allPages } from "./api";
 
@@ -147,6 +147,24 @@ export default function Scheduling({
     [warning, setWarning] = useState(null),
     [confirmWarning, setConfirmWarning] = useState(false),
     [uncertain, setUncertain] = useState(false);
+  const openedLink = useRef(false);
+  useEffect(() => {
+    if (loading || openedLink.current) return;
+    openedLink.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const proposalId = params.get("proposal"),
+      scheduleId = params.get("schedule");
+    const id = proposalId || scheduleId;
+    if (
+      id &&
+      /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)
+    ) {
+      (proposalId ? openProposal(id) : openSchedule(id)).catch((e) =>
+        setError(e.message),
+      );
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [loading]);
   const active = modes.includes(mode);
   const eligiblePeople =
     draft.kind === "WORK"
@@ -290,13 +308,13 @@ export default function Scheduling({
         if (e.status !== 404) throw e;
       }
       if (!value && !historyVersions.length) throw rootError;
-      if (!value) value = { visibility: "HISTORY_ONLY", id };
+      value = { ...(value || { visibility: "HISTORY_ONLY" }), id };
       const history = historyVersions.length
         ? await allPages(api, "/schedules/" + id + "/audit")
         : [];
       setVersions(historyVersions);
       setViewedRevision(
-        value.visibility === "HISTORY_ONLY" ? historyVersions[0] : null,
+        value.visibility !== "DETAIL" ? historyVersions[0] || null : null,
       );
       setAudit(history);
       setSchedule(value);

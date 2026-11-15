@@ -14,11 +14,13 @@ from .dependencies import identity,service
 from .catalog_routes import router as catalog_router
 from .scheduling_routes import router as scheduling_router
 from .document_routes import router as document_router
+from .reports import router as report_router
 from .schedule_jobs import lifespan
-app=FastAPI(title='HTTT10 - Mốc E',version='0.5.0',lifespan=lifespan,description='Tài khoản, danh mục, lịch, gửi/duyệt/rút CREATE/CHANGE/CANCEL, hủy họp. Tài liệu họp theo phiên bản lịch. Chưa có SMTP thật hoặc báo cáo.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
+app=FastAPI(title='HTTT10 - Lịch công tác',version='1.0.0',lifespan=lifespan,description='Tài khoản, danh mục, lịch, gửi/duyệt/rút CREATE/CHANGE/CANCEL, hủy họp. Tài liệu họp theo phiên bản lịch. Worker SMTP và báo cáo sử dụng theo kế hoạch.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
 app.include_router(catalog_router)
 app.include_router(scheduling_router)
 app.include_router(document_router)
+app.include_router(report_router)
 def error(request,status,code,message,fields=None,**details):
     headers={'Cache-Control':'no-store'}
     if status==401:headers['WWW-Authenticate']='Bearer'

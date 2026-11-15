@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { allPages, roles, localInput, stamp } from "./api";
 import Scheduling from "./scheduling";
+import UsageReport from "./reports";
 
 const tabs = {
   calendar: "Lịch công tác",
@@ -12,6 +13,7 @@ const tabs = {
   rooms: "Phòng họp",
   departments: "Phòng ban",
   users: "Tài khoản",
+  reports: "Báo cáo phòng",
 };
 const weekdays = [
   "Thứ Hai",
@@ -377,7 +379,13 @@ function EquipmentFields({ value, onChange }) {
 
 export default function Workspace({ api, user, logout, changePassword }) {
   const isAdmin = user.roles.includes("ADMIN");
-  const [tab, setTab] = useState("calendar"),
+  const [tab, setTab] = useState(() =>
+      new URLSearchParams(window.location.search).has("proposal")
+        ? "my_proposals"
+        : new URLSearchParams(window.location.search).has("schedule")
+          ? "my_schedules"
+          : "calendar",
+    ),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const [rooms, setRooms] = useState([]),
@@ -651,7 +659,8 @@ export default function Workspace({ api, user, logout, changePassword }) {
               ([k]) =>
                 (isAdmin || k !== "users") &&
                 (k !== "new_schedule" || user.roles.includes("EMPLOYEE")) &&
-                (k !== "review" || user.roles.includes("APPROVER")),
+                (k !== "review" || user.roles.includes("APPROVER")) &&
+                (k !== "reports" || isAdmin || user.roles.includes("APPROVER")),
             )
             .map(([k, v], i) => (
               <button
@@ -671,6 +680,7 @@ export default function Workspace({ api, user, logout, changePassword }) {
                       rooms: "▤",
                       departments: "◫",
                       users: "♙",
+                      reports: "▥",
                     }[k]
                   }
                 </span>
@@ -760,6 +770,9 @@ export default function Workspace({ api, user, logout, changePassword }) {
             directory={directory}
             loading={loading}
           />
+          {tab === "reports" && (
+            <UsageReport api={api} rooms={rooms} user={user} />
+          )}
           {tab === "calendar" && (
             <>
               <form

@@ -1,0 +1,180 @@
+{
+  "passed": 43,
+  "total": 43,
+  "tests": [
+    {
+      "name": "Không phiên không đọc báo cáo",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhân viên không có quyền báo cáo",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt không được phân công có báo cáo rỗng",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt chỉ thấy phòng được giao",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin tổng hợp được cả hai phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Bộ lọc gồm phòng ngoài quyền từ chối cả yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng không tồn tại không suy ra dữ liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Khoảng ngược",
+      "status": "PASS"
+    },
+    {
+      "name": "Bằng nhau",
+      "status": "PASS"
+    },
+    {
+      "name": "Thiếu offset",
+      "status": "PASS"
+    },
+    {
+      "name": "Quá 366 ngày",
+      "status": "PASS"
+    },
+    {
+      "name": "Lặp phòng chỉ tính một lần",
+      "status": "PASS"
+    },
+    {
+      "name": "Báo cáo rỗng vẫn tính giờ phục vụ",
+      "status": "PASS"
+    },
+    {
+      "name": "Chưa có đặt phòng cho tỷ lệ 0",
+      "status": "PASS"
+    },
+    {
+      "name": "Đếm chỉ current, không đếm bản cũ và pending",
+      "status": "PASS"
+    },
+    {
+      "name": "Số lượt hủy tách riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ họp loại hủy và bản cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ chuyển tiếp tách riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Tổng giờ phục vụ theo từng phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Tỷ lệ tổng dùng trọng số",
+      "status": "PASS"
+    },
+    {
+      "name": "Tỷ lệ từng phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Không trả lịch/nội dung/người/tệp riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhãn là kế hoạch",
+      "status": "PASS"
+    },
+    {
+      "name": "Cắt giờ họp theo kỳ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không đếm hủy bắt đầu đúng mốc cuối",
+      "status": "PASS"
+    },
+    {
+      "name": "Cắt giờ phục vụ theo kỳ",
+      "status": "PASS"
+    },
+    {
+      "name": "Kỳ chỉ có đệm không tính thêm lượt họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Cắt đệm vào kỳ",
+      "status": "PASS"
+    },
+    {
+      "name": "Đệm không vào tử số",
+      "status": "PASS"
+    },
+    {
+      "name": "Offset tương đương cho cùng kết quả",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ phục vụ dùng lịch sử cấu hình, chia giữa ngày",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ đặt vẫn báo riêng phần ngoài giờ phục vụ",
+      "status": "PASS"
+    },
+    {
+      "name": "Tử số chỉ lấy phần trong giờ phục vụ",
+      "status": "PASS"
+    },
+    {
+      "name": "Đệm lấy cấu hình tại giờ bắt đầu từng họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngừng nhận mới không xóa mẫu số lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngày đóng không có giờ phục vụ",
+      "status": "PASS"
+    },
+    {
+      "name": "Mẫu số 0 trả null",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngày ngoại lệ thay giờ tuần",
+      "status": "PASS"
+    },
+    {
+      "name": "Họp trong giờ ngoại lệ tính tỷ lệ đúng",
+      "status": "PASS"
+    },
+    {
+      "name": "Snapshot không trộn bản ghi vừa commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Lần báo cáo sau thấy cập nhật mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Thu hồi phạm vi có hiệu lực ngay",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI hoàn thành 50 thao tác",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "Real MySQL + ASGI; scoped aggregates, half-open clipping, historical service windows, weighted rates, read-only consistent snapshot. Not Windows/Docker/LAN."
+}

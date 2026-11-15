@@ -1,4 +1,4 @@
-# Isolated test stack. Run with project name httt10-tests (see docs/MocC_HuongDan.md).
+# Isolated test stack. Run with project name httt10-tests (see README.md).
 services:
   test-db:
     image: mysql:8.4
@@ -22,7 +22,7 @@ services:
       MYSQL_TEST_USER: root
       MYSQL_TEST_PASSWORD: httt10-test-only
       TEST_RESULT_DIR: /app/test-results
-    command: ["sh", "-c", "python test_auth.py && python test_catalog.py && python test_scheduling.py && python test_amendments.py && python test_documents.py"]
+    command: ["python", "run_tests.py"]
     volumes:
       - ./verification:/app/test-results
     depends_on:
