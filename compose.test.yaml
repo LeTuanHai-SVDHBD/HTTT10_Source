@@ -22,7 +22,7 @@ services:
       MYSQL_TEST_USER: root
       MYSQL_TEST_PASSWORD: httt10-test-only
       TEST_RESULT_DIR: /app/test-results
-    command: ["sh", "-c", "python test_auth.py && python test_catalog.py && python test_scheduling.py && python test_amendments.py"]
+    command: ["sh", "-c", "python test_auth.py && python test_catalog.py && python test_scheduling.py && python test_amendments.py && python test_documents.py"]
     volumes:
       - ./verification:/app/test-results
     depends_on:

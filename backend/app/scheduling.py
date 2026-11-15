@@ -1252,6 +1252,9 @@ def audit_history(ctx, schedule_id, page_no, page_size):
     with Session() as db:
         ids = {r["id"] for r in visible_revisions(db, ctx, schedule_id)}
         labels = {
+            "DOCUMENT_UPLOADED": "Đã thêm tài liệu họp",
+            "DOCUMENT_VERSION_UPLOADED": "Đã thêm phiên bản tài liệu",
+            "DOCUMENT_HIDDEN": "Đã ẩn tài liệu",
             "PROPOSAL_SUBMITTED": "Đã gửi yêu cầu",
             "PROPOSAL_APPROVED": "Đã chấp thuận yêu cầu",
             "PROPOSAL_REJECTED": "Đã từ chối yêu cầu",

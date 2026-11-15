@@ -949,4 +949,6 @@ Ngày 15/11/2026: mốc C (0.3.0) đã bổ sung 12 API thực tế cho kiểm t
 
 Ngày 15/11/2026: mốc D (0.4.0) đã cài CHANGE/CANCEL, hủy họp trực tiếp, giữ lịch cũ trong lúc chờ, chuyển current nhất quán khi duyệt và quyền lịch sử theo từng revision. Đổi phòng do người phụ trách phòng mới duyệt; hủy họp đồng thời vô hiệu bản sửa chờ; hết hạn lấy mốc DP-07. Tổng API thực tế là 43, CSDL baseline không đổi. Chi tiết và giới hạn xem `MocD_HuongDan.md` và `../verification/KetQuaKiemTraMocD.md`.
 
-Phần tiếp theo: quản lý tài liệu họp, worker gửi SMTP thật/thử lại, báo cáo theo kế hoạch và kiểm thử tổng thể Windows/Docker/LAN. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.
+Ngày 15/11/2026: mốc E (0.5.0) bổ sung 6 API tài liệu họp, lưu phiên bản bất biến, ẩn mềm và tải xuống qua Bearer theo context_revision_id. Tệp cũ không tự chuyển quyền sang bản lịch mới; người tạo được bổ sung biên bản sau họp, lịch đã hủy và ngữ cảnh không còn hiệu lực chỉ đọc. Kho tệp dùng volume riêng, không đưa storage_key/hash ra API; baseline không đổi. Tổng API thực tế là 49. Xem `MocE_HuongDan.md` và `../verification/KetQuaKiemTraMocE.md`.
+
+Phần tiếp theo: worker gửi SMTP thật/thử lại, báo cáo theo kế hoạch và kiểm thử tổng thể Windows/Docker/LAN. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.

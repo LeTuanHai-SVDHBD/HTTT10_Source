@@ -1,0 +1,59 @@
+{
+  "passed": 13,
+  "total": 13,
+  "tests": [
+    {
+      "name": "Chủ lịch tải tài liệu lên qua FormData thật",
+      "status": "PASS"
+    },
+    {
+      "name": "Thêm phiên bản giữ cả tệp cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải xuống dùng Bearer fetch và đúng byte",
+      "status": "PASS"
+    },
+    {
+      "name": "Tên tải xuống giữ tiếng Việt/định dạng",
+      "status": "PASS"
+    },
+    {
+      "name": "URL tạm được thu hồi",
+      "status": "PASS"
+    },
+    {
+      "name": "Ẩn tài liệu với lý do, danh sách mặc định bỏ tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch sử tệp ẩn vẫn xem và tải được",
+      "status": "PASS"
+    },
+    {
+      "name": "Mất phản hồi không cho gửi lặp mù",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lại đối chiếu đúng một bản đã commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tham gia đọc tài liệu, không có biểu mẫu ghi",
+      "status": "PASS"
+    },
+    {
+      "name": "Họp đã hủy chỉ xem tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ tải tài liệu khi chỉ còn quyền bản lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Tài liệu lịch sử không cấp lại quyền ghi",
+      "status": "PASS"
+    }
+  ],
+  "scope": "React JSDOM + real HTTP/MySQL multipart; no real browser layout or OS download dialog"
+}

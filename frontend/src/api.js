@@ -3,14 +3,22 @@ export function client(token, onExpired) {
     const response = await fetch("/api/v1" + path, {
       method,
       headers: {
-        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(body && !(body instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...(token ? { Authorization: "Bearer " + token } : {}),
         ...(options.key ? { "Idempotency-Key": options.key } : {}),
       },
-      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(body
+        ? { body: body instanceof FormData ? body : JSON.stringify(body) }
+        : {}),
     });
     const data =
-      response.status === 204 ? null : await response.json().catch(() => null);
+      response.status === 204
+        ? null
+        : response.ok && options.blob
+          ? await response.blob()
+          : await response.json().catch(() => null);
     if (!response.ok) {
       if (response.status === 401 && token) onExpired();
       const fields = data?.error?.field_errors

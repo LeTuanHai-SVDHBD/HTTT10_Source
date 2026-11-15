@@ -20,12 +20,14 @@ services:
       MYSQL_HOST: db
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Run scripts/setup_env.py}
       JWT_SECRET: ${JWT_SECRET:?Run scripts/setup_env.py}
+      DOCUMENT_STORAGE_DIR: /app/data/documents
     command: ["python", "-m", "app.cli", "migrate"]
     depends_on:
       db: {condition: service_healthy}
   api:
     build: ./backend
     environment: *backend_env
+    volumes: ["document_data:/app/data/documents"]
     depends_on:
       migrate: {condition: service_completed_successfully}
     healthcheck:
@@ -40,3 +42,4 @@ services:
       api: {condition: service_healthy}
 volumes:
   mysql_data:
+  document_data:

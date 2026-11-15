@@ -1251,9 +1251,9 @@ check(
     2,
 )
 check(
-    "OpenAPI mốc D công bố 43 thao tác",
+    "OpenAPI hiện công bố 49 thao tác",
     sum(len(v) for v in app.openapi()["paths"].values()),
-    43,
+    49,
 )
 output = dict(
     passed=len(results),

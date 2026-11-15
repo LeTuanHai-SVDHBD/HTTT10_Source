@@ -1,0 +1,424 @@
+{
+  "passed": 104,
+  "total": 104,
+  "tests": [
+    {
+      "name": "Tải lên/xuống đúng byte định dạng pdf",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash pdf",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng docx",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash docx",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng pptx",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash pptx",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng xlsx",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash xlsx",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng jpg",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash jpg",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng jpeg",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash jpeg",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải lên/xuống đúng byte định dạng png",
+      "status": "PASS"
+    },
+    {
+      "name": "Không lộ storage key/hash png",
+      "status": "PASS"
+    },
+    {
+      "name": "Tệp không đổi phiên bản lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "MIME tải xuống an toàn",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải xuống dạng attachment",
+      "status": "PASS"
+    },
+    {
+      "name": "nosniff và no-store",
+      "status": "PASS"
+    },
+    {
+      "name": "Tải xuống cần đăng nhập",
+      "status": "PASS"
+    },
+    {
+      "name": "Quyền đọc ADMIN",
+      "status": "PASS"
+    },
+    {
+      "name": "Quyền đọc ROGUE",
+      "status": "PASS"
+    },
+    {
+      "name": "Quyền đọc EMP2",
+      "status": "PASS"
+    },
+    {
+      "name": "Quyền đọc LEAD2",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ chủ lịch tải lên SHARED",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ chủ lịch tải lên LEAD1",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ chủ lịch tải lên ADMIN",
+      "status": "PASS"
+    },
+    {
+      "name": "Danh sách không lộ lịch ngoài quyền",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân trang đúng số lượng",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp bad.exe",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp bad.pdf",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp bad.png",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp empty.pdf",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp bad.docx",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn tệp aaaaaaaaaaaaaaaaaaaa",
+      "status": "PASS"
+    },
+    {
+      "name": "Làm sạch đường dẫn và ký tự tên tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn JSON thay multipart",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn metadata sai",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn metadata quá dài",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn hai payload file",
+      "status": "PASS"
+    },
+    {
+      "name": "Chấp nhận đúng 20 MiB",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn hơn 20 MiB",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn chunked vượt giới hạn",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn zip traversal",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn XML entity",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn macro",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn zip bomb",
+      "status": "PASS"
+    },
+    {
+      "name": "Bộ lọc giấu latest không cấp thao tác dùng expected cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Xem mọi ngữ cảnh cho chủ lịch quản lý latest",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ không thấy tên/tệp mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Người mới không thấy nhãn/tệp cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhãn an toàn dùng tên phiên bản được phép",
+      "status": "PASS"
+    },
+    {
+      "name": "Phiên bản mới chỉ thấy một tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Người cũ không tải được v2",
+      "status": "PASS"
+    },
+    {
+      "name": "Người mới không tải được v1",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng cũ không tải được v2",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt phòng mới tải v2",
+      "status": "PASS"
+    },
+    {
+      "name": "Version endpoint lọc trước phân trang",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gắn phiên bản sang lịch khác",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn expected latest cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt đổi lịch có tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản cũ chỉ đọc",
+      "status": "PASS"
+    },
+    {
+      "name": "Bản mới giữ tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tự chuyển tệp cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Thêm version từ tài liệu cũ vào bản lịch mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Cho bổ sung biên bản sau cuộc họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai phiên bản đồng thời chỉ một thắng",
+      "status": "PASS"
+    },
+    {
+      "name": "Ẩn kiểm tra latest",
+      "status": "PASS"
+    },
+    {
+      "name": "Chủ lịch ẩn tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Danh sách mặc định loại tệp đã ẩn",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch sử vẫn tải được tệp ẩn",
+      "status": "PASS"
+    },
+    {
+      "name": "Không thêm version vào tệp ẩn",
+      "status": "PASS"
+    },
+    {
+      "name": "Tệp ẩn có thể tra cứu lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit tài liệu không lộ tên riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit có sự kiện tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "WITHDRAWN không ghi thêm tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "WITHDRAWN vẫn đọc lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "REJECTED không ghi thêm tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "REJECTED vẫn đọc lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "EXPIRED không ghi thêm tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "EXPIRED vẫn đọc lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy họp đã có tài liệu",
+      "status": "PASS"
+    },
+    {
+      "name": "Họp đã hủy chỉ đọc",
+      "status": "PASS"
+    },
+    {
+      "name": "Tệp vẫn đọc sau hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tải tệp lên công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Hủy đồng thời upload vẫn hoàn tất",
+      "status": "PASS"
+    },
+    {
+      "name": "Upload cạnh tranh hủy chỉ commit trước hoặc bị chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Sau hủy không ghi thêm tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Kiểm tra lại quyền sau khi đã nhận tệp",
+      "status": "PASS"
+    },
+    {
+      "name": "Phiên bị hạn chế không để byte staging",
+      "status": "PASS"
+    },
+    {
+      "name": "Metadata JSON dạng part có Content-Type",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi sau publish được chuẩn hóa",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi lưu rollback metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi lưu dọn byte chưa commit",
+      "status": "PASS"
+    },
+    {
+      "name": "Không còn tệp staging",
+      "status": "PASS"
+    },
+    {
+      "name": "Không xóa byte có tham chiếu DB",
+      "status": "PASS"
+    },
+    {
+      "name": "Tệp hỏng trả lỗi an toàn",
+      "status": "PASS"
+    },
+    {
+      "name": "Tệp thiếu trả lỗi an toàn",
+      "status": "PASS"
+    },
+    {
+      "name": "Cleanup mặc định chỉ xem trước",
+      "status": "PASS"
+    },
+    {
+      "name": "Cleanup bỏ qua upload đang khóa",
+      "status": "PASS"
+    },
+    {
+      "name": "Cleanup dọn orphan quá hạn",
+      "status": "PASS"
+    },
+    {
+      "name": "Cleanup giữ byte có DB và tệp mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Cleanup không xóa lịch sử ẩn",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI đủ 49 thao tác",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI upload trả DocumentVersionView",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "Real MySQL + ASGI multipart, revision privacy, immutable bytes, size/format limits, concurrency and failure cleanup. No browser/Docker Windows/LAN/SMTP."
+}

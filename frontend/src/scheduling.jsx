@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Documents } from "./documents";
 import { stamp, commandKey, localInput, allPages } from "./api";
 
 const statusNames = {
@@ -289,7 +290,7 @@ export default function Scheduling({
         if (e.status !== 404) throw e;
       }
       if (!value && !historyVersions.length) throw rootError;
-      if (!value) value = { visibility: "HISTORY_ONLY" };
+      if (!value) value = { visibility: "HISTORY_ONLY", id };
       const history = historyVersions.length
         ? await allPages(api, "/schedules/" + id + "/audit")
         : [];
@@ -971,6 +972,19 @@ export default function Scheduling({
               rooms={rooms}
               departments={departments}
             />
+            {proposal.candidate?.kind === "MEETING" && (
+              <Documents
+                key={proposal.candidate.id}
+                api={api}
+                scheduleId={proposal.schedule_id}
+                revisionId={proposal.candidate.id}
+                canUpload={
+                  proposal.submitted_by.id === user.id &&
+                  proposal.status === "PENDING" &&
+                  new Date(proposal.expires_at) > new Date()
+                }
+              />
+            )}
             {proposal.base_comparison && (
               <div className="base-comparison">
                 <h4>
@@ -1219,6 +1233,18 @@ export default function Scheduling({
                   rooms={rooms}
                   departments={departments}
                 />
+                {schedule.current_revision?.kind === "MEETING" && (
+                  <Documents
+                    key={schedule.current_revision.id}
+                    api={api}
+                    scheduleId={schedule.id}
+                    revisionId={schedule.current_revision.id}
+                    canUpload={
+                      schedule.created_by.id === user.id &&
+                      schedule.lifecycle === "ACTIVE"
+                    }
+                  />
+                )}
                 {!schedule.current_revision && (
                   <p className="info-line">
                     Lịch chưa có phiên bản được xác nhận. Xem yêu cầu tại mục
@@ -1299,6 +1325,14 @@ export default function Scheduling({
                       rooms={rooms}
                       departments={departments}
                     />
+                    {viewedRevision.kind === "MEETING" && (
+                      <Documents
+                        key={viewedRevision.id}
+                        api={api}
+                        scheduleId={schedule.id}
+                        revisionId={viewedRevision.id}
+                      />
+                    )}
                   </div>
                 )}
                 <h4>Lịch sử xử lý</h4>

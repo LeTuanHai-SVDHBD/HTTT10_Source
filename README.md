@@ -1,8 +1,8 @@
-# HTTT10 - Mã nguồn mốc D (0.4.0)
+# HTTT10 - Mã nguồn mốc E (0.5.0)
 
-Mã nguồn FastAPI + ReactJS + SQLAlchemy + JWT + MySQL đã hoàn thành mốc A–D: xác thực, quản trị tài khoản/quyền, phòng ban, phòng họp, cấu hình giờ phục vụ/ngày nghỉ, phân công người duyệt, xem lịch theo quyền, tìm phòng trống, gửi/duyệt/từ chối/rút và tự hết hạn CREATE/CHANGE/CANCEL, giữ lịch cũ trong lúc chờ sửa/hủy công tác, hủy họp trực tiếp trước giờ bắt đầu. Tài liệu, SMTP thật và báo cáo sẽ được bổ sung ở các mốc tiếp theo.
+Mã nguồn FastAPI + ReactJS + SQLAlchemy + JWT + MySQL đã hoàn thành mốc A–E: xác thực, quản trị tài khoản/quyền, phòng ban, phòng họp, cấu hình giờ phục vụ/ngày nghỉ, phân công người duyệt, xem lịch theo quyền, tìm phòng trống, gửi/duyệt/từ chối/rút và tự hết hạn CREATE/CHANGE/CANCEL, giữ lịch cũ trong lúc chờ sửa/hủy công tác, hủy họp trực tiếp trước giờ bắt đầu. Mốc E bổ sung tài liệu họp, phiên bản tệp, ẩn và tải xuống theo quyền từng bản lịch. SMTP thật và báo cáo còn ở các mốc tiếp theo.
 
-**Đang chạy mốc A/B/C:** xem [hướng dẫn cập nhật và kiểm tra mốc D](docs/MocD_HuongDan.md). Giữ nguyên `.env`, tài khoản và volume hiện có; không bootstrap lại Admin hoặc xóa volume.
+**Đang chạy mốc A/B/C/D:** xem [hướng dẫn cập nhật và kiểm tra mốc E](docs/MocE_HuongDan.md). Giữ nguyên `.env`, tài khoản và volume hiện có; không bootstrap lại Admin hoặc xóa volume.
 
 ## 1. Chạy trên Windows bằng Docker Desktop
 
@@ -40,7 +40,7 @@ Mật khẩu không được lưu dưới dạng văn bản: backend dùng Argon
 
 ## 3. Kiểm tra API
 
-Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện đúng 43 operation đã cài: 6 nền mốc A, 22 mốc B, 12 mốc C và 3 mốc D:
+Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện đúng 49 operation đã cài: 6 nền mốc A, 22 mốc B, 12 mốc C, 3 mốc D và 6 mốc E:
 
 | API | Ý nghĩa |
 |---|---|
@@ -51,7 +51,7 @@ Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện �
 | GET /api/v1/health/live | Process đang hoạt động |
 | GET /api/v1/health/ready | MySQL và migration đã sẵn sàng |
 
-Ở Swagger: gọi login, copy access_token vào Authorize (chỉ nhập token, không thêm Bearer nếu công cụ đã tự gắn), rồi gọi me/password/logout. Không dán token thật vào ảnh báo cáo. Hợp đồng `docs/target-openapi.yaml` gồm 50 operation mục tiêu; Swagger thực tế chỉ công bố 43 operation đã cài.
+Ở Swagger: gọi login, copy access_token vào Authorize (chỉ nhập token, không thêm Bearer nếu công cụ đã tự gắn), rồi gọi me/password/logout. Không dán token thật vào ảnh báo cáo. Hợp đồng `docs/target-openapi.yaml` gồm 50 operation mục tiêu; Swagger thực tế chỉ công bố 49 operation đã cài.
 
 | Nhóm mốc B | Thao tác |
 |---|---|
@@ -85,6 +85,13 @@ Command lịch bắt buộc `Idempotency-Key` 16–128 ký tự. Retry sau mất
 
 Các API duyệt/từ chối/rút/hết hạn, đọc đề nghị, phiên bản và audit đã mở rộng cho CHANGE/CANCEL. Khi đổi phòng, người phụ trách phòng mới duyệt; khóa hợp phòng/người cũ và mới theo thứ tự thống nhất. Thông báo giải phóng lịch cũ gắn riêng ngữ cảnh revision cũ, không cấp quyền xem bản mới.
 
+| Nhóm mốc E | Thao tác |
+|---|---|
+| GET/POST /schedules/{id}/documents | Liệt kê/tải lên tài liệu theo ngữ cảnh bản lịch |
+| GET/POST /documents/{id}/versions | Lịch sử/thêm phiên bản tệp |
+| POST /documents/{id}/hides | Ẩn mềm, giữ lịch sử |
+| GET /documents/{id}/versions/{version_id}/content | Tải byte qua Bearer, kiểm tra quyền từng phiên bản |
+
 ## 4. Demo LAN
 
 Máy Windows chạy Docker và máy demo cùng mạng. Dùng `ipconfig` tìm IPv4 LAN của Windows. Trên máy còn lại mở `http://<IPv4-của-máy-Windows>:8080` (thay phần trong ngoặc bằng IP thật). Nếu bị firewall chặn, cho phép TCP 8080 ở mạng Private theo cấu hình máy của bạn.
@@ -109,16 +116,17 @@ Nếu bạn chủ động dùng CSDL baseline cũ đã có dữ liệu, phải s
 | backend/app/catalog_routes.py | 22 adapter HTTP mốc B, response DTO và phân quyền |
 | backend/app/scheduling.py | Service gửi/duyệt/rút, khóa tài nguyên, cảnh báo, chống lặp, tra cứu theo quyền |
 | backend/app/scheduling_routes.py | 15 adapter API mốc C/D |
+| backend/app/documents.py, document_storage.py, document_routes.py | 6 API tài liệu, quyền theo bản lịch, kho tệp riêng và dọn orphan |
 | backend/app/schedule_jobs.py | Lifespan quét yêu cầu hết hạn mỗi 30 giây |
 | backend/app/catalog.py | Service danh mục/quyền/cấu hình, calendar riêng tư và availability |
 | backend/app/security.py | Argon2id, JWT HS256, expiry/issuer/audience |
 | backend/app/models.py | ORM User/UserRole/AuthSession phục vụ mốc A |
 | backend/app/db.py | Engine, Session riêng, READ COMMITTED và timezone UTC |
-| backend/app/cli.py | Migration, adoption, bootstrap và expire-proposals |
+| backend/app/cli.py | Migration, adoption, bootstrap, expire-proposals và document-storage-cleanup |
 | backend/app/schemas.py | DTO từ hợp đồng; DTO cho auth, danh mục, calendar và tìm phòng |
 | backend/db/ | SQL baseline và metadata đã thiết kế |
 | backend/alembic/ | Migration 001 |
-| backend/test_auth.py, backend/test_catalog.py, backend/test_scheduling.py, backend/test_amendments.py | Integration FastAPI ASGI + MySQL thật, DB test riêng |
+| backend/test_auth.py, backend/test_catalog.py, backend/test_scheduling.py, backend/test_amendments.py, backend/test_documents.py | Integration FastAPI ASGI + MySQL thật, DB test riêng |
 | frontend/src/ | Auth, workspace quản trị và scheduling.jsx gửi/duyệt/rút/tra cứu hồ sơ, CSS responsive |
 | frontend/package-lock.json | Khóa các phiên bản npm đã build |
 | compose.yaml | DB/migrate/API/web, volume bền vững và healthcheck |
@@ -135,7 +143,7 @@ ORM ở mốc A chỉ ánh xạ các bảng đang dùng, không có nghĩa các 
 py test_auth.py
 ```
 
-Không dùng tài khoản ứng dụng giới hạn schema httt10 để tạo DB test. Chạy thêm `py test_catalog.py`, `py test_scheduling.py`, `py test_amendments.py` để kiểm tra mốc B–D. Kết quả ghi các file `*-result.json` trong `verification` (hoặc `TEST_RESULT_DIR` nếu đặt). Có thể chạy bằng Docker riêng, không cần cài PyMySQL vào Windows, theo hướng dẫn mốc D. Bộ kiểm chứng dùng FastAPI ASGI TestClient với MySQL thật; không thay cho kiểm thử trình duyệt đi xuyên Nginx/Docker/Windows.
+Không dùng tài khoản ứng dụng giới hạn schema httt10 để tạo DB test. Chạy thêm `py test_catalog.py`, `py test_scheduling.py`, `py test_amendments.py`, `py test_documents.py` để kiểm tra mốc B–E. Kết quả ghi các file `*-result.json` trong `verification` (hoặc `TEST_RESULT_DIR` nếu đặt). Có thể chạy bằng Docker riêng, không cần cài PyMySQL vào Windows, theo hướng dẫn mốc E. Bộ kiểm chứng dùng FastAPI ASGI TestClient với MySQL thật; không thay cho kiểm thử trình duyệt đi xuyên Nginx/Docker/Windows.
 
 Kiểm tra build frontend: vào frontend, chạy `npm ci`, rồi `npm run build`. Bản gửi đã build thành công; Docker Desktop Windows và LAN vẫn cần chạy thực tế theo hướng dẫn trên.
 
@@ -143,4 +151,6 @@ Kiểm tra build frontend: vào frontend, chạy `npm ci`, rồi `npm run build`
 
 Mốc D đã cài sửa/hủy lịch đã duyệt: bản sửa và đề nghị hủy công tác giữ current cũ trong lúc chờ; duyệt bản sửa thay hiệu lực nguyên tử; hủy họp trực tiếp trước giờ bắt đầu và vô hiệu bản sửa chờ. Có kiểm chứng quyền từng revision, idempotency, rollback, hết hạn và các quyết định cạnh tranh. Xem [kết quả mốc D](verification/KetQuaKiemTraMocD.md).
 
-Phần còn lại theo đặc tả: tài liệu họp, gửi SMTP thật/thử lại và báo cáo mức độ đặt phòng theo kế hoạch. Sau đó kiểm thử tổng thể trên trình duyệt thật, Docker Desktop Windows và LAN. Không coi kiểm tra API/MySQL hoặc JSDOM là bằng chứng đã kiểm tra Docker/trình duyệt/LAN.
+Mốc E đã cài tài liệu họp theo quyền từng bản lịch, lưu phiên bản, ẩn và tải xuống; xem [hướng dẫn mốc E](docs/MocE_HuongDan.md) và [kết quả kiểm tra](verification/KetQuaKiemTraMocE.md).
+
+Phần còn lại theo đặc tả: gửi SMTP thật/thử lại và báo cáo mức độ đặt phòng theo kế hoạch. Sau đó kiểm thử tổng thể trên trình duyệt thật, Docker Desktop Windows và LAN. Không coi kiểm tra API/MySQL hoặc JSDOM là bằng chứng đã kiểm tra Docker/trình duyệt/LAN.
