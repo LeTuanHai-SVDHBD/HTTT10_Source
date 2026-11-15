@@ -943,4 +943,6 @@ Bước 4 đã hoàn thành hợp đồng REST API/DTO 1.0: 50 HTTP operation tr
 
 Mốc A đã có mã nguồn 0.1.0: FastAPI/React, SQLAlchemy/Alembic baseline, Compose DB/migrate/API/web, bootstrap Admin qua CLI, JWT/phiên DB, login/me/logout/đổi mật khẩu và UI tương ứng. Kiểm tra FastAPI ASGI + MySQL 8.4.0 đạt 28/28; frontend build đạt và màn hình login đã kiểm tra trực quan. Compose được kiểm tra tĩnh; chưa chạy Docker Desktop Windows, Nginx end-to-end hoặc LAN hai máy trong môi trường tạo gói. Baseline giữ 24 bảng; Alembic thêm bảng kỹ thuật alembic_version.
 
-Bước kế tiếp là mốc B: quản trị tài khoản/quyền, danh mục phòng ban/phòng họp/cấu hình, lịch và tìm phòng. Các API lịch, phê duyệt, tài liệu, email và báo cáo chưa được cài đặt trong mốc A. Không tự xuất hiện thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.
+Ngày 15/11/2026: mốc B (0.2.0) đã bổ sung quản trị tài khoản/quyền, phòng ban, phòng họp/thiết bị, phiên bản giờ phục vụ/ngày nghỉ, phân công người duyệt, calendar và tìm phòng. Tổng cộng 28 API thực tế (6 nền + 22 mốc B). Chi tiết cài đặt và kiểm chứng ở `MocB_HuongDan.md` và `../verification/KetQuaKiemTraMocB.md`. Cấu trúc baseline giữ nguyên, không tạo lại dữ liệu mốc A.
+
+Bước kế tiếp là mốc C: nộp và duyệt yêu cầu tạo lịch, kiểm tra xung đột/khóa tài nguyên trong transaction. Dữ liệu lịch trong kiểm thử B là fixture của CSDL test riêng; chưa có luồng người dùng nộp/duyệt. Tài liệu, email SMTP và báo cáo tiếp tục ở các mốc sau. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.

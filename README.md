@@ -1,6 +1,8 @@
-# HTTT10 - Mã nguồn mốc A (0.1.0)
+# HTTT10 - Mã nguồn mốc B (0.2.0)
 
-Đây là mã nguồn chạy thật của nền tài khoản: FastAPI + ReactJS + SQLAlchemy + JWT + MySQL. Đã cài login, me, logout, đổi mật khẩu, bootstrap Admin, Alembic baseline và trang React tương ứng. Các chức năng đặt phòng/lịch công tác/phê duyệt/tài liệu/email/báo cáo sẽ cài ở mốc B-F, không có endpoint trả thành công giả cho chúng.
+Mã nguồn FastAPI + ReactJS + SQLAlchemy + JWT + MySQL đã hoàn thành mốc A và B: xác thực, quản trị tài khoản/quyền, phòng ban, phòng họp, cấu hình giờ phục vụ/ngày nghỉ, phân công người duyệt, xem lịch theo quyền và tìm phòng trống. Nộp/duyệt lịch, tài liệu, SMTP và báo cáo sẽ được bổ sung ở mốc C–F.
+
+**Đang chạy mốc A:** xem [hướng dẫn cập nhật và kiểm tra mốc B](docs/MocB_HuongDan.md). Giữ nguyên `.env`, tài khoản và volume hiện có; không bootstrap lại Admin hoặc xóa volume.
 
 ## 1. Chạy trên Windows bằng Docker Desktop
 
@@ -38,7 +40,7 @@ Mật khẩu không được lưu dưới dạng văn bản: backend dùng Argon
 
 ## 3. Kiểm tra API
 
-Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện đúng 6 operation đã cài:
+Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện đúng 28 operation đã cài, gồm 6 thao tác nền bên dưới và 22 thao tác mốc B:
 
 | API | Ý nghĩa |
 |---|---|
@@ -49,7 +51,18 @@ Mở [Swagger trên máy này](http://localhost:8080/api/docs). Swagger hiện �
 | GET /api/v1/health/live | Process đang hoạt động |
 | GET /api/v1/health/ready | MySQL và migration đã sẵn sàng |
 
-Ở Swagger: gọi login, copy access_token vào Authorize (chỉ nhập token, không thêm Bearer nếu công cụ đã tự gắn), rồi gọi me/password/logout. Không dán token thật vào ảnh báo cáo. Hợp đồng 50 operation trước đó là mục tiêu toàn dự án, không phải 50 operation đã cài trong mốc A.
+Ở Swagger: gọi login, copy access_token vào Authorize (chỉ nhập token, không thêm Bearer nếu công cụ đã tự gắn), rồi gọi me/password/logout. Không dán token thật vào ảnh báo cáo. Hợp đồng `docs/target-openapi.yaml` gồm 50 operation mục tiêu; Swagger thực tế chỉ công bố 28 operation đã cài.
+
+| Nhóm mốc B | Thao tác |
+|---|---|
+| /directory/users | Directory ACTIVE, chỉ UserRef, phân trang và tìm kiếm |
+| /users, /users/{id}, /users/{id}/temporary-password | Admin cấp/sửa/khóa/đặt lại mật khẩu |
+| /departments, /departments/{id} | Tra cứu; Admin thêm/sửa/ngừng nhận mới |
+| /rooms, /rooms/{id} | Tra cứu; Admin thêm/sửa phòng và thiết bị |
+| /rooms/{id}/policies | Admin xem lịch sử/thêm phiên bản cấu hình |
+| /rooms/{id}/approvers, /departments/{id}/approvers | Admin xem/thay tập người duyệt theo phạm vi |
+| /rooms/availability | Tìm phòng theo thời gian/sức chứa/thiết bị, không giữ chỗ |
+| /calendar | Lịch hiệu lực, phân biệt DETAIL/BUSY_ONLY và đệm |
 
 ## 4. Demo LAN
 
@@ -71,15 +84,18 @@ Nếu bạn chủ động dùng CSDL baseline cũ đã có dữ liệu, phải s
 |---|---|
 | backend/app/main.py | Router auth/health, middleware request ID, lỗi đã lược input |
 | backend/app/services.py | AuthService và transaction ghi lịch sử |
+| backend/app/dependencies.py | Xác thực chung cho router auth và mốc B |
+| backend/app/catalog_routes.py | 22 adapter HTTP mốc B, response DTO và phân quyền |
+| backend/app/catalog.py | Service danh mục/quyền/cấu hình, calendar riêng tư và availability |
 | backend/app/security.py | Argon2id, JWT HS256, expiry/issuer/audience |
 | backend/app/models.py | ORM User/UserRole/AuthSession phục vụ mốc A |
 | backend/app/db.py | Engine, Session riêng, READ COMMITTED và timezone UTC |
 | backend/app/cli.py | Migration, adoption, bootstrap bằng prompt |
-| backend/app/schemas.py | DTO từ hợp đồng; chỉ các model auth/health được dùng lúc này |
+| backend/app/schemas.py | DTO từ hợp đồng; DTO cho auth, danh mục, calendar và tìm phòng |
 | backend/db/ | SQL baseline và metadata đã thiết kế |
 | backend/alembic/ | Migration 001 |
-| backend/test_auth.py | Integration FastAPI ASGI + MySQL thật, DB test riêng |
-| frontend/src/ | Login, đổi mật khẩu, hồ sơ và logout, CSS responsive |
+| backend/test_auth.py, backend/test_catalog.py | Integration FastAPI ASGI + MySQL thật, DB test riêng |
+| frontend/src/ | Auth, api.js và workspace quản trị/lịch/tìm phòng, CSS responsive |
 | frontend/package-lock.json | Khóa các phiên bản npm đã build |
 | compose.yaml | DB/migrate/API/web, volume bền vững và healthcheck |
 | verification/ | Bằng chứng kiểm tra và giới hạn |
@@ -94,10 +110,10 @@ ORM ở mốc A chỉ ánh xạ các bảng đang dùng, không có nghĩa các 
 py test_auth.py
 ```
 
-Không dùng tài khoản ứng dụng giới hạn schema httt10 để tạo DB test. File kết quả mới ghi verification/auth-result.json. Bộ kiểm chứng dùng FastAPI ASGI TestClient với MySQL thật; không thay cho kiểm thử trình duyệt đi xuyên Nginx/Docker/Windows.
+Không dùng tài khoản ứng dụng giới hạn schema httt10 để tạo DB test. Chạy thêm `py test_catalog.py` để kiểm tra mốc B. Kết quả ghi `verification/auth-result.json` và `verification/catalog-result.json`. Bộ kiểm chứng dùng FastAPI ASGI TestClient với MySQL thật; không thay cho kiểm thử trình duyệt đi xuyên Nginx/Docker/Windows.
 
 Kiểm tra build frontend: vào frontend, chạy `npm ci`, rồi `npm run build`. Bản gửi đã build thành công; Docker Desktop Windows và LAN vẫn cần chạy thực tế theo hướng dẫn trên.
 
 ## 8. Mốc tiếp theo
 
-Mốc B bổ sung quản trị tài khoản/quyền/phòng ban/phòng họp/cấu hình, calendar và tìm phòng. Mốc C mới cài nộp/duyệt và chống đặt trùng bằng Service thật. Không đánh dấu toàn bộ 44 kịch bản nghiệm thu đã hoàn thành chỉ vì auth đạt.
+Mốc B đã cài quản trị tài khoản/quyền/phòng ban/phòng họp/cấu hình, calendar và tìm phòng. Lịch mới cài A–B có thể trống vì chưa có nộp/duyệt lịch. Mốc C sẽ cài nộp/duyệt và chống đặt trùng bằng transaction/khóa phòng/người. Bộ test B dùng fixture lịch trong DB test riêng để kiểm tra truy vấn và bảo vệ cấu hình; chưa chứng minh luồng duyệt của mốc C. Xem [kết quả kiểm tra mốc B](verification/KetQuaKiemTraMocB.md).

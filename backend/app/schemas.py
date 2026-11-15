@@ -234,10 +234,12 @@ class DepartmentApproversUpdate(DTO):
     @model_validator(mode='after')
     def names(self):unique(self.approver_user_ids,'Người duyệt');return self
 class RoomApproversView(DTO):
+    pending_proposal_count:Annotated[int,Field(ge=0)]=0
     room_id:UUID
     room_version:Version
     approvers:list[UserRef]
 class DepartmentApproversView(DTO):
+    pending_proposal_count:Annotated[int,Field(ge=0)]=0
     department_id:UUID
     department_version:Version
     approvers:list[UserRef]

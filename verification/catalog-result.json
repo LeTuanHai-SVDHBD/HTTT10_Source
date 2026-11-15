@@ -1,0 +1,340 @@
+{
+  "passed": 83,
+  "total": 83,
+  "tests": [
+    {
+      "name": "Mật khẩu tạm không được truy cập danh mục",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin không tự nhận vai trò nhân viên",
+      "status": "PASS"
+    },
+    {
+      "name": "Không có phiên -> 401",
+      "status": "PASS"
+    },
+    {
+      "name": "UUID sai -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân trang vượt giới hạn -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Danh mục baseline giữ nguyên",
+      "status": "PASS"
+    },
+    {
+      "name": "Tạo phòng ban",
+      "status": "PASS"
+    },
+    {
+      "name": "Mã phòng ban trùng trả 409",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn sửa phòng ban bằng phiên bản cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Sửa phòng ban tăng phiên bản",
+      "status": "PASS"
+    },
+    {
+      "name": "Cấp tài khoản không trả mật khẩu/hash",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhân viên không được đọc tài khoản quản trị",
+      "status": "PASS"
+    },
+    {
+      "name": "Nhân viên không được tạo phòng ban",
+      "status": "PASS"
+    },
+    {
+      "name": "Directory chỉ trả UserRef",
+      "status": "PASS"
+    },
+    {
+      "name": "Tìm kiếm tài khoản phân trang",
+      "status": "PASS"
+    },
+    {
+      "name": "Tìm kiếm không coi ký tự % là wildcard",
+      "status": "PASS"
+    },
+    {
+      "name": "Email duy nhất không phân biệt hoa thường",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ đổi tên không thu hồi phiên",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi vai trò thu hồi token hiện có",
+      "status": "PASS"
+    },
+    {
+      "name": "Khóa tài khoản vô hiệu phiên",
+      "status": "PASS"
+    },
+    {
+      "name": "Directory không trả người bị khóa",
+      "status": "PASS"
+    },
+    {
+      "name": "Đặt lại mật khẩu thu hồi phiên",
+      "status": "PASS"
+    },
+    {
+      "name": "Đặt lại mật khẩu bắt buộc đổi",
+      "status": "PASS"
+    },
+    {
+      "name": "Không khóa Admin hoạt động cuối cùng",
+      "status": "PASS"
+    },
+    {
+      "name": "Không gỡ quyền Admin hoạt động cuối cùng",
+      "status": "PASS"
+    },
+    {
+      "name": "Tạo phòng đồng thời cấu hình và thiết bị",
+      "status": "PASS"
+    },
+    {
+      "name": "Chặn khoảng phục vụ chồng nhau",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ gán người có APPROVER và ACTIVE",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân công phòng cập nhật phiên bản",
+      "status": "PASS"
+    },
+    {
+      "name": "Me tải phạm vi duyệt từ server",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân công từ màn hình cũ bị chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân công công tác theo phòng ban",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt không được quản lý phân công",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngoài phạm vi chỉ thấy bận và chuyển tiếp",
+      "status": "PASS"
+    },
+    {
+      "name": "Busy DTO không lộ title/ID/nội dung",
+      "status": "PASS"
+    },
+    {
+      "name": "Entry key che mã revision gốc",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar không hiện chờ duyệt hoặc đã hủy",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tham gia được xem tiêu đề",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin chưa có phạm vi không xem chi tiết",
+      "status": "PASS"
+    },
+    {
+      "name": "Bộ lọc phòng và người dùng là AND",
+      "status": "PASS"
+    },
+    {
+      "name": "Khoảng đệm hiện riêng khi xem phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar cá nhân không tính đệm của phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar mặc định trả cả công tác của mình",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar chỉ phần đệm vẫn có kết quả",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar buộc múi giờ RFC3339",
+      "status": "PASS"
+    },
+    {
+      "name": "Calendar chặn khoảng quá rộng",
+      "status": "PASS"
+    },
+    {
+      "name": "Đường availability được nhận trước UUID động",
+      "status": "PASS"
+    },
+    {
+      "name": "Tìm phòng chặn lịch đã xác nhận",
+      "status": "PASS"
+    },
+    {
+      "name": "Tìm phòng tính đệm sau lịch trước",
+      "status": "PASS"
+    },
+    {
+      "name": "Đệm của lịch mới cũng không đè lịch tiếp",
+      "status": "PASS"
+    },
+    {
+      "name": "Đúng mép đệm cho phép",
+      "status": "PASS"
+    },
+    {
+      "name": "Giờ nghỉ trưa không được đặt",
+      "status": "PASS"
+    },
+    {
+      "name": "Đệm được chạy qua giờ nghỉ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không bỏ qua giây khi kiểm tra giờ đóng",
+      "status": "PASS"
+    },
+    {
+      "name": "Sức chứa tính toàn bộ người",
+      "status": "PASS"
+    },
+    {
+      "name": "Thiết bị lọc AND",
+      "status": "PASS"
+    },
+    {
+      "name": "Thiếu một thiết bị thì loại",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu chờ không giữ phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu chờ có cảnh báo an toàn",
+      "status": "PASS"
+    },
+    {
+      "name": "Cảnh báo không lộ tiêu đề yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tạo được loại trừ chính lịch cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Không được loại trừ lịch người khác",
+      "status": "PASS"
+    },
+    {
+      "name": "Loại trừ UUID không tồn tại -> 404",
+      "status": "PASS"
+    },
+    {
+      "name": "Thời lượng dưới 15 phút -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Bắt đầu dưới 30 phút -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Quá 90 ngày -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Giảm sức chứa không làm sai lịch đã duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi giờ không làm lịch đã duyệt ngoài giờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Tăng đệm không gây chồng lịch đã duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Cấu hình bị từ chối không tăng phiên bản/không lưu",
+      "status": "PASS"
+    },
+    {
+      "name": "Không sửa ngược cấu hình lịch sử",
+      "status": "PASS"
+    },
+    {
+      "name": "Thêm cấu hình hợp lệ giữ lịch sử cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngày nghỉ riêng loại khỏi tìm phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngừng nhận mới không còn được tìm thấy",
+      "status": "PASS"
+    },
+    {
+      "name": "Ngừng nhận mới giữ lịch đã duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Phân công hiển thị số yêu cầu chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Thu hồi phạm vi có hiệu lực ngay",
+      "status": "PASS"
+    },
+    {
+      "name": "Gỡ APPROVER vô hiệu phân công công tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Thu hồi vai trò tăng phiên bản phạm vi bị ảnh hưởng",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai Admin gỡ quyền đồng thời chỉ một thành công",
+      "status": "PASS"
+    },
+    {
+      "name": "Sau cạnh tranh vẫn còn đúng một Admin hoạt động",
+      "status": "PASS"
+    },
+    {
+      "name": "Mốc B lưu audit nhưng không ghi mật khẩu",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI công bố 28 thao tác đã cài",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "FastAPI ASGI + real MySQL; test fixtures only; not Docker Desktop Windows/LAN"
+}

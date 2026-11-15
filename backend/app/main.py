@@ -2,16 +2,17 @@ import logging,time,threading
 from collections import OrderedDict,deque
 from uuid import uuid4
 from fastapi import FastAPI,Depends,Request,Response
-from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError,IntegrityError,OperationalError
 from .db import engine
-from .services import AuthService,Failure
+from .services import Failure
 from .schemas import LoginInput,PasswordChange,TokenResponse,CurrentUser,HealthView
-app=FastAPI(title='HTTT10 - Mốc A',version='0.1.0',description='Chỉ auth và health đã cài đặt. Hợp đồng toàn dự án nằm trong docs/contracts. Các API lịch sẽ bổ sung ở mốc B-F.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
-bearer=HTTPBearer(auto_error=False);service=AuthService()
+from .dependencies import identity,service
+from .catalog_routes import router as catalog_router
+app=FastAPI(title='HTTT10 - Mốc B',version='0.2.0',description='Auth, quản trị danh mục/quyền, calendar và tìm phòng. Nộp/duyệt lịch sẽ có ở mốc C. Hợp đồng mục tiêu: docs/target-openapi.yaml.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
+app.include_router(catalog_router)
 def error(request,status,code,message,fields=None):
     headers={'Cache-Control':'no-store'}
     if status==401:headers['WWW-Authenticate']='Bearer'
@@ -30,11 +31,17 @@ async def request_id(request,call_next):
 async def failure(request,exc):return error(request,exc.status,exc.code,exc.message)
 @app.exception_handler(RequestValidationError)
 async def validation(request,exc):return error(request,422,'VALIDATION_ERROR','Dữ liệu chưa hợp lệ.',[{'path':'.'.join(map(str,e['loc'])),'code':e['type']} for e in exc.errors()])
+@app.exception_handler(IntegrityError)
+async def constraint_error(request,exc):
+    code=getattr(exc.orig,'args',[None])[0]
+    if code==1062:return error(request,409,'DUPLICATE_VALUE','Mã, email hoặc mốc hiệu lực đã tồn tại. Vui lòng kiểm tra lại.')
+    return error(request,409,'CONSTRAINT_VIOLATION','Dữ liệu đang được tham chiếu hoặc không đáp ứng ràng buộc.')
+@app.exception_handler(OperationalError)
+async def operational_error(request,exc):
+    if getattr(exc.orig,'args',[None])[0] in (1205,1213):return error(request,409,'CONCURRENT_UPDATE','Có thao tác đồng thời. Vui lòng tải lại và thử lại.')
+    return error(request,503,'TEMPORARY_UNAVAILABLE','Cơ sở dữ liệu chưa sẵn sàng.')
 @app.exception_handler(SQLAlchemyError)
 async def database_error(request,exc):return error(request,503,'TEMPORARY_UNAVAILABLE','Cơ sở dữ liệu chưa sẵn sàng.')
-def identity(credentials:HTTPAuthorizationCredentials|None=Depends(bearer)):
-    if credentials is None:raise Failure(401,'SESSION_INVALID','Vui lòng đăng nhập.')
-    return service.identity(credentials.credentials)
 class LoginLimiter:
     def __init__(self):self.lock=threading.Lock();self.entries=OrderedDict()
     def check(self,key):
