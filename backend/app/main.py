@@ -4,6 +4,7 @@ from uuid import uuid4
 from fastapi import FastAPI,Depends,Request,Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError,IntegrityError,OperationalError
 from .db import engine
@@ -11,13 +12,16 @@ from .services import Failure
 from .schemas import LoginInput,PasswordChange,TokenResponse,CurrentUser,HealthView
 from .dependencies import identity,service
 from .catalog_routes import router as catalog_router
-app=FastAPI(title='HTTT10 - Mốc B',version='0.2.0',description='Auth, quản trị danh mục/quyền, calendar và tìm phòng. Nộp/duyệt lịch sẽ có ở mốc C. Hợp đồng mục tiêu: docs/target-openapi.yaml.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
+from .scheduling_routes import router as scheduling_router
+from .schedule_jobs import lifespan
+app=FastAPI(title='HTTT10 - Mốc C',version='0.3.0',lifespan=lifespan,description='Auth, danh mục, calendar, tìm phòng, gửi/duyệt/rút yêu cầu tạo lịch. Chưa có sửa/hủy lịch đã duyệt, tài liệu, SMTP hoặc báo cáo.',openapi_url='/api/v1/openapi.json',docs_url='/api/docs',redoc_url=None)
 app.include_router(catalog_router)
-def error(request,status,code,message,fields=None):
+app.include_router(scheduling_router)
+def error(request,status,code,message,fields=None,**details):
     headers={'Cache-Control':'no-store'}
     if status==401:headers['WWW-Authenticate']='Bearer'
     if status==429:headers['Retry-After']='60'
-    return JSONResponse(status_code=status,headers=headers,content={'request_id':request.state.request_id,'error':{'code':code,'message':message,'field_errors':fields or [],'conflicts':[],'warnings':[],'warning_acknowledgement_token':None,'expiration_committed':False}})
+    return JSONResponse(status_code=status,headers=headers,content=jsonable_encoder({'request_id':request.state.request_id,'error':{'code':code,'message':message,'field_errors':fields or [],'conflicts':[],'warnings':[],'warning_acknowledgement_token':None,'expiration_committed':False,**details}}))
 @app.middleware('http')
 async def request_id(request,call_next):
     request.state.request_id=str(uuid4())
@@ -28,7 +32,7 @@ async def request_id(request,call_next):
     response.headers['X-Request-ID']=request.state.request_id;response.headers['Cache-Control']='no-store'
     return response
 @app.exception_handler(Failure)
-async def failure(request,exc):return error(request,exc.status,exc.code,exc.message)
+async def failure(request,exc):return error(request,exc.status,exc.code,exc.message,**exc.details)
 @app.exception_handler(RequestValidationError)
 async def validation(request,exc):return error(request,422,'VALIDATION_ERROR','Dữ liệu chưa hợp lệ.',[{'path':'.'.join(map(str,e['loc'])),'code':e['type']} for e in exc.errors()])
 @app.exception_handler(IntegrityError)

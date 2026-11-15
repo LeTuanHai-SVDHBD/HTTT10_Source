@@ -919,4 +919,256 @@ td b {
   }
 }
 
-@media (max-width:760px){.window-row select,.window-row input{width:0;min-width:0;flex:1}.window-row button{flex-shrink:0}.form-grid input,.form-grid select{min-width:0}}
+@media (max-width: 760px) {
+  .window-row select,
+  .window-row input {
+    width: 0;
+    min-width: 0;
+    flex: 1;
+  }
+  .window-row button {
+    flex-shrink: 0;
+  }
+  .form-grid input,
+  .form-grid select {
+    min-width: 0;
+  }
+}
+/* Schedule proposals */
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 9px;
+  padding: 12px;
+  border: 1px solid #cbd8d0;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  resize: vertical;
+  color: #142c35;
+}
+textarea:focus {
+  outline: 2px solid #4f8d72;
+  outline-offset: 2px;
+}
+.schedule-form {
+  padding: 26px;
+  background: #fff;
+  border: 1px solid #dce6df;
+  border-radius: 12px;
+}
+.schedule-form fieldset {
+  border: 1px solid #dce6df;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 24px 0;
+}
+.schedule-form .plain-fieldset {
+  padding: 0;
+  border: 0;
+  margin: 0;
+  min-width: 0;
+}
+.schedule-form legend {
+  font-size: 13px;
+  font-weight: 650;
+  padding: 0 8px;
+}
+.add-participant {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.add-participant select {
+  margin: 0;
+}
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 12px 0;
+  border-top: 1px solid #e8eee9;
+}
+.participant-row > span:first-child {
+  margin-right: auto;
+}
+.participant-row .check {
+  margin: 0;
+  font-size: 12px;
+}
+.participant-row .tag {
+  margin: 0;
+}
+.preflight-result {
+  background: #fff;
+  border: 1px solid #ceded1;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 22px 0;
+}
+.preflight-result h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+.proposal-list {
+  display: grid;
+  gap: 14px;
+}
+.proposal-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff;
+  border: 1px solid #dce6df;
+  border-radius: 10px;
+  padding: 23px;
+}
+.proposal-card h3 {
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 12px 0 7px;
+  overflow-wrap: anywhere;
+}
+.proposal-card p {
+  margin: 0;
+}
+.proposal-card .tag {
+  margin-right: 7px;
+}
+.state-pending {
+  background: #fff1d2;
+  color: #86611e;
+}
+.state-approved,
+.state-active {
+  background: #e4f1e7;
+  color: #2c6c4e;
+}
+.state-rejected {
+  background: #fbe8e5;
+  color: #9c4c3e;
+}
+.state-withdrawn,
+.state-expired,
+.state-cancelled {
+  background: #edf0ed;
+  color: #737e75;
+}
+.schedule-description {
+  white-space: pre-wrap;
+  background: #f5f8f4;
+  padding: 17px;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.revision-detail h3 {
+  font-size: 23px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.schedule-period {
+  font-size: 14px;
+  font-weight: 650;
+  color: #3c6651;
+}
+.participant-detail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.participant-detail li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid #e7ece6;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.participant-detail small {
+  color: #789080;
+}
+.audit-list {
+  list-style: none;
+  padding: 0;
+}
+.audit-list li {
+  padding: 13px 0;
+  border-bottom: 1px solid #e7ece6;
+  font-size: 13px;
+}
+.audit-list small {
+  display: block;
+  color: #7c8b80;
+  margin-top: 6px;
+}
+.sidebar nav {
+  overflow-y: auto;
+  min-height: 0;
+}
+.sidebar-profile {
+  flex-shrink: 0;
+}
+.scheduling-panel > .error,
+.scheduling-panel > .notice {
+  margin-bottom: 15px;
+}
+.scheduling-panel .info-line button {
+  margin-left: 15px;
+  font-size: 12px;
+}
+.schedule-issues .error,
+.schedule-issues .warning {
+  margin: 10px 0;
+}
+@media (max-width: 760px) {
+  .schedule-form {
+    padding: 18px;
+  }
+  .schedule-form fieldset {
+    padding: 13px;
+  }
+  .participant-row {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .participant-row > span:first-child {
+    width: 100%;
+    font-size: 12px;
+  }
+  .participant-row .check {
+    margin-right: auto;
+  }
+  .proposal-card {
+    align-items: start;
+    padding: 18px;
+    flex-direction: column;
+  }
+  .proposal-card .compact {
+    align-self: end;
+  }
+  .add-participant {
+    gap: 9px;
+  }
+  .add-participant select {
+    min-width: 0;
+    font-size: 12px;
+  }
+  .participant-detail li {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sidebar nav {
+    overflow: visible;
+  }
+  .schedule-form .form-grid input {
+    min-width: 0;
+  }
+}

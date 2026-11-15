@@ -7,6 +7,6 @@ def database_url():
 engine=create_engine(database_url(),pool_pre_ping=True,isolation_level='READ COMMITTED',hide_parameters=True)
 @event.listens_for(engine,'connect')
 def utc_session(dbapi_connection,record):
-    with dbapi_connection.cursor() as cursor:cursor.execute("SET time_zone = '+00:00'")
+    with dbapi_connection.cursor() as cursor:cursor.execute("SET time_zone = '+00:00'");cursor.execute("SET SESSION innodb_lock_wait_timeout=10")
 Session=sessionmaker(engine,expire_on_commit=False)
 class Base(DeclarativeBase):pass

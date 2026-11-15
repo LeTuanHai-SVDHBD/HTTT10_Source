@@ -1,0 +1,428 @@
+{
+  "passed": 105,
+  "total": 105,
+  "tests": [
+    {
+      "name": "Không có phiên không được kiểm tra lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin kỹ thuật không tự có quyền đăng ký",
+      "status": "PASS"
+    },
+    {
+      "name": "Thiếu Idempotency-Key bị từ chối",
+      "status": "PASS"
+    },
+    {
+      "name": "Key không hợp lệ bị từ chối",
+      "status": "PASS"
+    },
+    {
+      "name": "Không nhận trạng thái/người gửi do client tự gán",
+      "status": "PASS"
+    },
+    {
+      "name": "Chủ trì phải tham gia bắt buộc",
+      "status": "PASS"
+    },
+    {
+      "name": "Preflight không giữ tài nguyên",
+      "status": "PASS"
+    },
+    {
+      "name": "Preflight không tạo root",
+      "status": "PASS"
+    },
+    {
+      "name": "Gửi yêu cầu trả 201",
+      "status": "PASS"
+    },
+    {
+      "name": "Biên nhận chỉ có ID không giả xác nhận giữ phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu mới PENDING / root chưa có lịch hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Người gửi chỉ được rút, chưa có nút duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Lưu outbox và delivery cùng yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Email vẫn chờ, chưa có SMTP giả thành công",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu chờ không xuất hiện trong calendar",
+      "status": "PASS"
+    },
+    {
+      "name": "Người ngoài không đọc yêu cầu chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin kỹ thuật không đọc yêu cầu riêng",
+      "status": "PASS"
+    },
+    {
+      "name": "Root chờ ngoài quyền trả 404",
+      "status": "PASS"
+    },
+    {
+      "name": "Danh sách theo người gửi không rò toàn bộ yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt đúng phạm vi thấy yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt ngoài phạm vi không thấy yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry cùng key trả cùng ID",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry có header Idempotency-Replayed",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry không nhân đôi root hoặc outbox",
+      "status": "PASS"
+    },
+    {
+      "name": "Key thành công không được đổi payload",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tự duyệt yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Không tự từ chối yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Không có scope bị chặn ở server",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt phiên bản cũ bị chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt hợp lệ trả 200",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ sau duyệt mới có hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt tăng phiên bản root và proposal",
+      "status": "PASS"
+    },
+    {
+      "name": "Lưu người phê duyệt thật",
+      "status": "PASS"
+    },
+    {
+      "name": "Replay quyết định được xét trước phiên bản cũ",
+      "status": "PASS"
+    },
+    {
+      "name": "Replay quyết định không tạo event mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu đã xử lý không rút được",
+      "status": "PASS"
+    },
+    {
+      "name": "Root hiệu lực ngoài quyền chỉ BUSY_ONLY",
+      "status": "PASS"
+    },
+    {
+      "name": "Busy không lộ title/ID/người tham gia",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tạo xem chi tiết bản hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Người ngoài không lấy được revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tạo xem lịch sử revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Người tạo có audit nghiệp vụ",
+      "status": "PASS"
+    },
+    {
+      "name": "Audit không trả raw metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch liên quan lọc đúng quyền",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin không tự có lịch chi tiết toàn đơn vị",
+      "status": "PASS"
+    },
+    {
+      "name": "Đã giữ phòng thì preflight không bookable",
+      "status": "PASS"
+    },
+    {
+      "name": "Xung đột không tiết lộ title/root đối thủ",
+      "status": "PASS"
+    },
+    {
+      "name": "Phương án cứng xung đột không được gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng không đủ sức chứa trả conflict",
+      "status": "PASS"
+    },
+    {
+      "name": "Không có người duyệt thay chặn gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Chỉ có chính người gửi làm người duyệt thì chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai yêu cầu chờ cùng phòng cần xác nhận cảnh báo",
+      "status": "PASS"
+    },
+    {
+      "name": "Chưa xác nhận cảnh báo không chiếm key",
+      "status": "PASS"
+    },
+    {
+      "name": "Token xác nhận không chứa UUID lịch đối thủ",
+      "status": "PASS"
+    },
+    {
+      "name": "Token cảnh báo không dùng làm token đăng nhập",
+      "status": "PASS"
+    },
+    {
+      "name": "Token cảnh báo gắn người thao tác",
+      "status": "PASS"
+    },
+    {
+      "name": "Token cảnh báo gắn payload",
+      "status": "PASS"
+    },
+    {
+      "name": "Xác nhận cảnh báo cho phép lưu yêu cầu thứ hai",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai yêu cầu chờ vẫn không giữ phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt cũng phải xác nhận warning hiện tại",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu thứ nhất được duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu thứ hai không được duyệt khi phòng đã giữ",
+      "status": "PASS"
+    },
+    {
+      "name": "Xung đột giữ PENDING, không tự từ chối",
+      "status": "PASS"
+    },
+    {
+      "name": "Người bắt buộc bận chặn dù phòng khác",
+      "status": "PASS"
+    },
+    {
+      "name": "Một bên tùy chọn chỉ cảnh báo",
+      "status": "PASS"
+    },
+    {
+      "name": "Xác nhận tùy chọn được gửi",
+      "status": "PASS"
+    },
+    {
+      "name": "Tùy chọn vẫn được duyệt sau xác nhận",
+      "status": "PASS"
+    },
+    {
+      "name": "Lịch cũ tùy chọn, lịch mới bắt buộc vẫn chỉ cảnh báo",
+      "status": "PASS"
+    },
+    {
+      "name": "Công tác qua đêm nhiều ngày không bị giới hạn giờ phòng",
+      "status": "PASS"
+    },
+    {
+      "name": "Người duyệt công tác theo phòng ban chấp thuận",
+      "status": "PASS"
+    },
+    {
+      "name": "Công tác không trộn người khác phòng ban",
+      "status": "PASS"
+    },
+    {
+      "name": "Người gửi không đăng ký thay phòng ban khác",
+      "status": "PASS"
+    },
+    {
+      "name": "Công tác nhiều ngày chặn trùng người với họp",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối bắt buộc có lý do",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối hợp lệ lưu quyết định",
+      "status": "PASS"
+    },
+    {
+      "name": "Từ chối không giữ chỗ",
+      "status": "PASS"
+    },
+    {
+      "name": "Người khác không rút hộ yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Người gửi được rút yêu cầu",
+      "status": "PASS"
+    },
+    {
+      "name": "Retry rút không bị phiên bản cũ chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Yêu cầu rút không thể được duyệt",
+      "status": "PASS"
+    },
+    {
+      "name": "Đến hạn trả PROPOSAL_EXPIRED",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi hết hạn nói rõ đã commit",
+      "status": "PASS"
+    },
+    {
+      "name": "EXPIRED được lưu thật",
+      "status": "PASS"
+    },
+    {
+      "name": "Sweep tự hết hạn xử lý hồ sơ chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Sweep lặp không ghi event lần hai",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt sát giờ không áp lại điều kiện 30 phút",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt kiểm tra lại thành viên bị khóa",
+      "status": "PASS"
+    },
+    {
+      "name": "Quyền duyệt bị thu hồi có hiệu lực tại server",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi sau UPDATE hoàn tác current và trạng thái",
+      "status": "PASS"
+    },
+    {
+      "name": "Lỗi sau UPDATE không ghi event quyết định",
+      "status": "PASS"
+    },
+    {
+      "name": "Có thể duyệt lại sau rollback",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt đọc lại trạng thái phòng nhận mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Phòng ngừng nhận không tự từ chối hồ sơ chờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Tập cảnh báo đổi bắt buộc xác nhận lại",
+      "status": "PASS"
+    },
+    {
+      "name": "Token xác nhận hết hạn không được dùng",
+      "status": "PASS"
+    },
+    {
+      "name": "Key hết hạn yêu cầu đọc lại hồ sơ trước khi tạo mới",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai POST cùng key đồng thời đều nhận receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai POST cùng key chỉ tạo một lịch",
+      "status": "PASS"
+    },
+    {
+      "name": "Hai duyệt cùng phòng chỉ một được chấp thuận",
+      "status": "PASS"
+    },
+    {
+      "name": "Cùng phòng không có hai lịch hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt khác phòng nhưng chung người bắt buộc chỉ một thắng",
+      "status": "PASS"
+    },
+    {
+      "name": "Người bắt buộc không bị giữ ở hai lịch cùng giờ",
+      "status": "PASS"
+    },
+    {
+      "name": "Duyệt và rút cạnh tranh chỉ một thành công",
+      "status": "PASS"
+    },
+    {
+      "name": "Kết quả duyệt/rút nhất quán với hiệu lực",
+      "status": "PASS"
+    },
+    {
+      "name": "OpenAPI mốc C có 40 operation thật",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "Real MySQL + FastAPI ASGI, CREATE submit/approve/reject/withdraw; concurrent transactions, no SMTP/browser/Docker Windows/LAN"
+}

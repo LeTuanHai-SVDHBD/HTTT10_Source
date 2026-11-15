@@ -945,4 +945,6 @@ Mốc A đã có mã nguồn 0.1.0: FastAPI/React, SQLAlchemy/Alembic baseline, 
 
 Ngày 15/11/2026: mốc B (0.2.0) đã bổ sung quản trị tài khoản/quyền, phòng ban, phòng họp/thiết bị, phiên bản giờ phục vụ/ngày nghỉ, phân công người duyệt, calendar và tìm phòng. Tổng cộng 28 API thực tế (6 nền + 22 mốc B). Chi tiết cài đặt và kiểm chứng ở `MocB_HuongDan.md` và `../verification/KetQuaKiemTraMocB.md`. Cấu trúc baseline giữ nguyên, không tạo lại dữ liệu mốc A.
 
-Bước kế tiếp là mốc C: nộp và duyệt yêu cầu tạo lịch, kiểm tra xung đột/khóa tài nguyên trong transaction. Dữ liệu lịch trong kiểm thử B là fixture của CSDL test riêng; chưa có luồng người dùng nộp/duyệt. Tài liệu, email SMTP và báo cáo tiếp tục ở các mốc sau. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.
+Ngày 15/11/2026: mốc C (0.3.0) đã bổ sung 12 API thực tế cho kiểm tra phương án, gửi/duyệt/từ chối/rút yêu cầu CREATE và tra cứu lịch/bản lịch/audit. Có khóa phòng/người dưới READ COMMITTED, kiểm tra phiên bản, token xác nhận cảnh báo, idempotency, tự hết hạn và outbox/delivery cùng giao dịch. Tổng API hiện tại là 40; bộ kiểm thử CREATE dùng HTTP adapter/transaction thật trên MySQL, gồm các kết nối duyệt cạnh tranh. Chi tiết và giới hạn ở `MocC_HuongDan.md` và `../verification/KetQuaKiemTraMocC.md`. CSDL baseline giữ nguyên.
+
+Bước kế tiếp là mốc D: sửa/hủy lịch đã duyệt theo các quyết định giữ lịch cũ và duyệt lại đã chốt. Chưa có tài liệu, gửi SMTP thật hoặc báo cáo. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.

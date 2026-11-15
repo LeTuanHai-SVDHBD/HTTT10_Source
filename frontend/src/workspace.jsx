@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { allPages, roles, localInput, stamp } from "./api";
+import Scheduling from "./scheduling";
 
 const tabs = {
   calendar: "Lịch công tác",
   finder: "Tìm phòng trống",
+  new_schedule: "Tạo yêu cầu lịch",
+  my_proposals: "Yêu cầu của tôi",
+  review: "Chờ tôi duyệt",
+  my_schedules: "Hồ sơ lịch",
   rooms: "Phòng họp",
   departments: "Phòng ban",
   users: "Tài khoản",
@@ -642,14 +647,33 @@ export default function Workspace({ api, user, logout, changePassword }) {
         <p>LỊCH CÔNG TÁC NỘI BỘ</p>
         <nav>
           {Object.entries(tabs)
-            .filter(([k]) => isAdmin || k !== "users")
+            .filter(
+              ([k]) =>
+                (isAdmin || k !== "users") &&
+                (k !== "new_schedule" || user.roles.includes("EMPLOYEE")) &&
+                (k !== "review" || user.roles.includes("APPROVER")),
+            )
             .map(([k, v], i) => (
               <button
                 key={k}
                 className={tab === k ? "nav active" : "nav"}
                 onClick={() => switchTab(k)}
               >
-                <span>{["▦", "⌕", "▤", "◫", "♙"][i]}</span>
+                <span aria-hidden="true">
+                  {
+                    {
+                      calendar: "▦",
+                      finder: "⌕",
+                      new_schedule: "+",
+                      my_proposals: "▤",
+                      review: "✓",
+                      my_schedules: "◷",
+                      rooms: "▤",
+                      departments: "◫",
+                      users: "♙",
+                    }[k]
+                  }
+                </span>
                 {v}
               </button>
             ))}
@@ -682,7 +706,15 @@ export default function Workspace({ api, user, logout, changePassword }) {
                   ? "Theo dõi lịch đã xác nhận. Thời gian hiển thị theo giờ Việt Nam."
                   : tab === "finder"
                     ? "Chọn thời gian và nhu cầu để tìm phòng phù hợp."
-                    : "Quản lý thông tin dùng chung của đơn vị."}
+                    : {
+                        new_schedule:
+                          "Đăng ký cuộc họp hoặc công tác để người phụ trách xét duyệt.",
+                        my_proposals:
+                          "Theo dõi yêu cầu và kết quả xử lý liên quan đến bạn.",
+                        review: "Xét yêu cầu trong phạm vi bạn được phân công.",
+                        my_schedules:
+                          "Tra cứu các hồ sơ lịch bạn được phép xem.",
+                      }[tab] || "Quản lý thông tin dùng chung của đơn vị."}
               </p>
             </div>
             {isAdmin && ["rooms", "departments", "users"].includes(tab) && (
@@ -719,6 +751,15 @@ export default function Workspace({ api, user, logout, changePassword }) {
             </div>
           )}
           {loading && <p role="status">Đang tải dữ liệu…</p>}
+          <Scheduling
+            mode={tab}
+            api={api}
+            user={user}
+            rooms={rooms}
+            departments={departments}
+            directory={directory}
+            loading={loading}
+          />
           {tab === "calendar" && (
             <>
               <form

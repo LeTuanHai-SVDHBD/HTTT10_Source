@@ -1,10 +1,11 @@
 export function client(token, onExpired) {
-  return async (path, method = "GET", body) => {
+  return async (path, method = "GET", body, options = {}) => {
     const response = await fetch("/api/v1" + path, {
       method,
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: "Bearer " + token } : {}),
+        ...(options.key ? { "Idempotency-Key": options.key } : {}),
       },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
@@ -15,11 +16,15 @@ export function client(token, onExpired) {
       const fields = data?.error?.field_errors
         ?.map((f) => f.path.replace(/^body\./, ""))
         .join(", ");
-      throw new Error(
+      const error = new Error(
         (data?.error?.message ||
           "Không kết nối được dịch vụ. Vui lòng thử lại.") +
           (fields ? " Kiểm tra: " + fields + "." : ""),
       );
+      error.code = data?.error?.code;
+      error.info = data?.error;
+      error.status = response.status;
+      throw error;
     }
     return data;
   };
@@ -55,3 +60,10 @@ export const stamp = (value) =>
     dateStyle: "short",
     timeStyle: "short",
   });
+
+// getRandomValues also works on HTTP LAN origins where randomUUID is unavailable.
+export function commandKey() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
