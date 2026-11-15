@@ -1,4 +1,4 @@
-"""Milestone C: CREATE proposals, resource locking, receipts and safe reads.
+"""Milestone D: CREATE/CHANGE/CANCEL, resource locking, receipts and safe reads.
 
 Commands share the baseline schema and READ COMMITTED transaction. Explicit
 lock order is idempotency -> root -> proposal -> room -> department -> users
@@ -76,20 +76,21 @@ def fresh_actor(db, ctx):
     return user
 
 
-def lock_resources(db, candidate, user_ids):
-    if candidate.kind == "MEETING":
+def lock_resources(db, candidate, user_ids, other_candidates=()):
+    # Lock the union before any user locks, including both sides of a room move.
+    candidates = [candidate, *other_candidates]
+    rooms = sorted({str(v.room_id) for v in candidates if v.kind == "MEETING"})
+    departments = sorted({str(v.department_id) for v in candidates if v.kind == "WORK"})
+    for room_id in rooms:
+        c.one(db, "SELECT id FROM meeting_rooms WHERE id=:id FOR UPDATE", id=room_id)
+    for department_id in departments:
         c.one(
-            db,
-            "SELECT id FROM meeting_rooms WHERE id=:id FOR UPDATE",
-            id=str(candidate.room_id),
+            db, "SELECT id FROM departments WHERE id=:id FOR UPDATE", id=department_id
         )
-    else:
-        c.one(
-            db,
-            "SELECT id FROM departments WHERE id=:id FOR UPDATE",
-            id=str(candidate.department_id),
-        )
-    for user_id in sorted(set(user_ids) | {u for u, _ in participant_pairs(candidate)}):
+    people = set(user_ids) | {
+        u for value in candidates for u, _ in participant_pairs(value)
+    }
+    for user_id in sorted(people):
         c.one(db, "SELECT id FROM users WHERE id=:id FOR UPDATE", id=user_id)
 
 
@@ -125,8 +126,10 @@ def require_review(db, actor, candidate, submitter):
         fail(403, "FORBIDDEN", "Bạn không được phân công duyệt yêu cầu này.")
 
 
-def warning_token(actor, candidate, excluded, fingerprint):
-    payload_hash = digest(dict(candidate=candidate_json(candidate), excluded=excluded))
+def warning_token(actor, candidate, excluded, fingerprint, context=None):
+    payload_hash = digest(
+        dict(candidate=candidate_json(candidate), excluded=excluded, context=context)
+    )
     return jwt.encode(
         dict(
             purpose="warning-ack",
@@ -140,7 +143,7 @@ def warning_token(actor, candidate, excluded, fingerprint):
     )
 
 
-def valid_warning_token(token, actor, candidate, excluded, fingerprint):
+def valid_warning_token(token, actor, candidate, excluded, fingerprint, context=None):
     try:
         value = jwt.decode(
             token or "",
@@ -152,7 +155,13 @@ def valid_warning_token(token, actor, candidate, excluded, fingerprint):
             value["purpose"] == "warning-ack"
             and value["sub"] == actor
             and value["ph"]
-            == digest(dict(candidate=candidate_json(candidate), excluded=excluded))
+            == digest(
+                dict(
+                    candidate=candidate_json(candidate),
+                    excluded=excluded,
+                    context=context,
+                )
+            )
             and value["wh"] == fingerprint
         )
     except jwt.PyJWTError:
@@ -160,7 +169,14 @@ def valid_warning_token(token, actor, candidate, excluded, fingerprint):
 
 
 def availability(
-    db, actor, candidate, *, submitter=None, excluded=None, submitting=True
+    db,
+    actor,
+    candidate,
+    *,
+    submitter=None,
+    excluded=None,
+    submitting=True,
+    warning_context=None,
 ):
     now = sec.now()
     start, end = c.utc(candidate.starts_at), c.utc(candidate.ends_at)
@@ -358,7 +374,7 @@ def availability(
             fingerprints.append(("pending_person", person, pending))
     fingerprint = digest(fingerprints)
     token = (
-        warning_token(actor["id"], candidate, excluded, fingerprint)
+        warning_token(actor["id"], candidate, excluded, fingerprint, warning_context)
         if warnings
         else None
     )
@@ -375,7 +391,9 @@ def availability(
     )
 
 
-def check_result(result, fingerprint, actor, candidate, excluded, token):
+def check_result(
+    result, fingerprint, actor, candidate, excluded, token, warning_context=None
+):
     if result["conflicts"]:
         fail(
             409,
@@ -384,7 +402,7 @@ def check_result(result, fingerprint, actor, candidate, excluded, token):
             conflicts=result["conflicts"],
         )
     if result["warnings"] and not valid_warning_token(
-        token, actor["id"], candidate, excluded, fingerprint
+        token, actor["id"], candidate, excluded, fingerprint, warning_context
     ):
         fail(
             409,
@@ -399,16 +417,18 @@ def preflight(ctx, data):
     c.require_member(ctx)
     with Session() as db:
         actor = fresh_actor(db, ctx)
-        if "EMPLOYEE" not in actor["roles"]:
-            fail(403, "FORBIDDEN", "Cần quyền Nhân viên để đăng ký lịch.")
         excluded = str(data.exclude_schedule_id) if data.exclude_schedule_id else None
+        context = None
         if excluded:
-            root = c.one(
-                db, "SELECT created_by FROM schedule_roots WHERE id=:id", id=excluded
-            )
-            if root["created_by"] != actor["id"]:
-                fail(403, "FORBIDDEN", "Chỉ loại trừ lịch do chính bạn tạo.")
-        return availability(db, actor, data.candidate, excluded=excluded)[0]
+            root = c.one(db, "SELECT * FROM schedule_roots WHERE id=:id", id=excluded)
+            base = active_owned(db, actor, root)
+            validate_change_kind(base, data.candidate)
+            context = {"base_revision_id": root["current_revision_id"]}
+        elif "EMPLOYEE" not in actor["roles"]:
+            fail(403, "FORBIDDEN", "Cần quyền Nhân viên để đăng ký lịch.")
+        return availability(
+            db, actor, data.candidate, excluded=excluded, warning_context=context
+        )[0]
 
 
 def claim_key(db, actor_id, operation, target, data, key):
@@ -470,19 +490,30 @@ def finish_key(db, key, schedule_id, proposal_id, status):
 
 
 def schedule_audit(db, actor, action, schedule_id, revision_id):
+    audit_id = c.uid()
     c.run(
         db,
         """INSERT INTO audit_entries(id,actor_user_id,action,entity_type,entity_id,schedule_id,revision_id,safe_metadata)
         VALUES(:id,:actor,:action,'schedule',:s,:s,:r,JSON_OBJECT())""",
-        id=c.uid(),
+        id=audit_id,
         actor=actor,
         action=action,
         s=schedule_id,
         r=revision_id,
     )
 
+    return audit_id
 
-def notify(db, action, root, proposal, candidate, actor=None):
+
+def notify(
+    db, action, root, proposal, candidate, actor=None, revision_id=None, metadata=None
+):
+    # One event has one revision context; never mix old and new audiences.
+    revision_id = revision_id or (
+        proposal["candidate_revision_id"] or proposal["base_revision_id"]
+        if proposal
+        else root["current_revision_id"]
+    )
     event_id = c.uid()
     c.run(
         db,
@@ -490,10 +521,10 @@ def notify(db, action, root, proposal, candidate, actor=None):
         VALUES(:id,:s,:p,:action,:dedupe,CAST(:payload AS JSON))""",
         id=event_id,
         s=root["id"],
-        p=proposal["id"],
+        p=proposal["id"] if proposal else None,
         action=action,
-        dedupe=proposal["id"] + ":" + action,
-        payload=json.dumps(dict(revision_id=proposal["candidate_revision_id"])),
+        dedupe=(proposal["id"] if proposal else root["id"]) + ":" + action,
+        payload=json.dumps(dict(revision_id=revision_id)),
     )
     recipients = (
         {root["created_by"]}
@@ -513,7 +544,14 @@ def notify(db, action, root, proposal, candidate, actor=None):
                 u=user_id,
                 now=sec.now(),
             )
-    schedule_audit(db, actor, action, root["id"], proposal["candidate_revision_id"])
+    audit_id = schedule_audit(db, actor, action, root["id"], revision_id)
+    if metadata:
+        c.run(
+            db,
+            "UPDATE audit_entries SET safe_metadata=CAST(:meta AS JSON) WHERE id=:id",
+            meta=json.dumps(metadata, ensure_ascii=False),
+            id=audit_id,
+        )
 
 
 def candidate_from_revision(db, revision_id):
@@ -546,22 +584,16 @@ def candidate_from_revision(db, revision_id):
     )
 
 
-def insert_create(db, actor, candidate):
-    schedule_id, revision_id, proposal_id = c.uid(), c.uid(), c.uid()
-    c.run(
-        db,
-        "INSERT INTO schedule_roots(id,kind,created_by) VALUES(:id,:kind,:u)",
-        id=schedule_id,
-        kind=candidate.kind,
-        u=actor["id"],
-    )
+def insert_revision(db, actor, schedule_id, candidate, revision_no):
+    revision_id = c.uid()
     c.run(
         db,
         """INSERT INTO schedule_revisions(id,schedule_id,kind,revision_no,title,description,starts_at,ends_at,room_id,chair_user_id,department_id,work_location,work_context,created_by)
-        VALUES(:id,:s,:kind,1,:title,:description,:start,:end,:room,:chair,:dept,:location,:context,:u)""",
+        VALUES(:id,:s,:kind,:no,:title,:description,:start,:end,:room,:chair,:dept,:location,:context,:u)""",
         id=revision_id,
         s=schedule_id,
         kind=candidate.kind,
+        no=revision_no,
         title=candidate.title,
         description=candidate.description,
         start=c.utc(candidate.starts_at),
@@ -581,6 +613,19 @@ def insert_create(db, actor, candidate):
             u=person,
             required=required,
         )
+    return revision_id
+
+
+def insert_create(db, actor, candidate):
+    schedule_id, proposal_id = c.uid(), c.uid()
+    c.run(
+        db,
+        "INSERT INTO schedule_roots(id,kind,created_by) VALUES(:id,:kind,:u)",
+        id=schedule_id,
+        kind=candidate.kind,
+        u=actor["id"],
+    )
+    revision_id = insert_revision(db, actor, schedule_id, candidate, 1)
     c.run(
         db,
         """INSERT INTO approval_proposals(id,schedule_id,kind,submitted_by,candidate_revision_id,expires_at)
@@ -638,19 +683,20 @@ def submit(ctx, data, key, operation):
     return transaction_retry(action)
 
 
-def expire_one(db, root, proposal, candidate):
+def expire_one(db, root, proposal, candidate, reason=None, bump_root=True):
     c.run(
         db,
         "UPDATE approval_proposals SET status='EXPIRED',resolved_at=:now,reason=:reason,row_version=row_version+1 WHERE id=:id",
         now=sec.now(),
-        reason="Đã đến giờ bắt đầu, yêu cầu hết hạn xử lý.",
+        reason=reason or "Đã đến hạn xử lý yêu cầu.",
         id=proposal["id"],
     )
-    c.run(
-        db,
-        "UPDATE schedule_roots SET row_version=row_version+1 WHERE id=:id",
-        id=root["id"],
-    )
+    if bump_root:
+        c.run(
+            db,
+            "UPDATE schedule_roots SET row_version=row_version+1 WHERE id=:id",
+            id=root["id"],
+        )
     notify(db, "PROPOSAL_EXPIRED", root, proposal, candidate)
 
 
@@ -677,14 +723,21 @@ def resolve(ctx, proposal_id, data, key, withdrawing=False):
                 "SELECT * FROM approval_proposals WHERE id=:id FOR UPDATE",
                 id=proposal_id,
             )
-            if proposal["kind"] != "CREATE":
-                fail(
-                    409,
-                    "PROPOSAL_KIND_UNAVAILABLE",
-                    "Loại đề nghị này chưa được triển khai ở mốc C.",
-                )
-            candidate = candidate_from_revision(db, proposal["candidate_revision_id"])
-            lock_resources(db, candidate, [ctx[0]["id"], proposal["submitted_by"]])
+            revision_id = (
+                proposal["candidate_revision_id"] or proposal["base_revision_id"]
+            )
+            candidate = candidate_from_revision(db, revision_id)
+            base = (
+                candidate_from_revision(db, proposal["base_revision_id"])
+                if proposal["base_revision_id"]
+                else None
+            )
+            lock_resources(
+                db,
+                candidate,
+                [ctx[0]["id"], proposal["submitted_by"]],
+                other_candidates=[base] if base else [],
+            )
             actor = fresh_actor(db, ctx)
             if withdrawing:
                 if actor["id"] != proposal["submitted_by"]:
@@ -708,7 +761,12 @@ def resolve(ctx, proposal_id, data, key, withdrawing=False):
                     "PROPOSAL_ALREADY_RESOLVED",
                     "Yêu cầu đã được xử lý hoặc hết hiệu lực.",
                 )
-            if proposal["expires_at"] <= sec.now():
+            deadline = (
+                min(proposal["expires_at"], c.utc(base.starts_at))
+                if base
+                else proposal["expires_at"]
+            )
+            if deadline <= sec.now():
                 expire_one(db, root, proposal, candidate)
                 c.run(
                     db,
@@ -719,11 +777,18 @@ def resolve(ctx, proposal_id, data, key, withdrawing=False):
                 )
                 expired = True
             else:
-                if root["current_revision_id"] or root["cancelled_at"]:
+                if (
+                    root["cancelled_at"]
+                    or (proposal["kind"] == "CREATE" and root["current_revision_id"])
+                    or (
+                        base
+                        and proposal["base_revision_id"] != root["current_revision_id"]
+                    )
+                ):
                     fail(
                         409,
                         "BASE_REVISION_CHANGED",
-                        "Lịch không còn ở trạng thái chờ xác nhận ban đầu.",
+                        "Phiên bản lịch gốc không còn phù hợp với đề nghị này.",
                     )
                 status = (
                     "WITHDRAWN"
@@ -731,49 +796,83 @@ def resolve(ctx, proposal_id, data, key, withdrawing=False):
                     else ("APPROVED" if data.decision == "APPROVE" else "REJECTED")
                 )
                 if status == "APPROVED":
-                    result, fingerprint = availability(
-                        db,
-                        actor,
-                        candidate,
-                        submitter=proposal["submitted_by"],
-                        excluded=root["id"],
-                        submitting=False,
-                    )
-                    check_result(
-                        result,
-                        fingerprint,
-                        actor,
-                        candidate,
-                        root["id"],
-                        data.warning_acknowledgement_token,
-                    )
-                    c.run(
-                        db,
-                        "UPDATE schedule_roots SET current_revision_id=:r WHERE id=:id",
-                        r=proposal["candidate_revision_id"],
-                        id=root["id"],
-                    )
+                    if proposal["kind"] == "CANCEL":
+                        if candidate.kind != "WORK":
+                            fail(
+                                409,
+                                "INVALID_PROPOSAL_KIND",
+                                "Chỉ công tác có đề nghị hủy cần duyệt.",
+                            )
+                        c.run(
+                            db,
+                            """UPDATE schedule_roots SET cancelled_at=:now,cancelled_by=:u,cancel_reason=:reason WHERE id=:id""",
+                            now=sec.now(),
+                            u=actor["id"],
+                            reason=proposal["reason"],
+                            id=root["id"],
+                        )
+                    else:
+                        context = (
+                            {"base_revision_id": proposal["base_revision_id"]}
+                            if base
+                            else None
+                        )
+                        result, fingerprint = availability(
+                            db,
+                            actor,
+                            candidate,
+                            submitter=proposal["submitted_by"],
+                            excluded=root["id"],
+                            submitting=False,
+                            warning_context=context,
+                        )
+                        check_result(
+                            result,
+                            fingerprint,
+                            actor,
+                            candidate,
+                            root["id"],
+                            data.warning_acknowledgement_token,
+                            context,
+                        )
+                        c.run(
+                            db,
+                            "UPDATE schedule_roots SET current_revision_id=:r WHERE id=:id",
+                            r=proposal["candidate_revision_id"],
+                            id=root["id"],
+                        )
                 c.run(
                     db,
                     "UPDATE schedule_roots SET row_version=row_version+1 WHERE id=:id",
                     id=root["id"],
                 )
+                reason = data.reason if data.reason is not None else proposal["reason"]
                 c.run(
                     db,
                     """UPDATE approval_proposals SET status=:status,resolved_by=:u,resolved_at=:now,reason=:reason,row_version=row_version+1 WHERE id=:id""",
                     status=status,
                     u=actor["id"],
                     now=sec.now(),
-                    reason=data.reason,
+                    reason=reason,
                     id=proposal_id,
                 )
                 notify(db, "PROPOSAL_" + status, root, proposal, candidate, actor["id"])
+                if status == "APPROVED" and proposal["kind"] == "CHANGE":
+                    notify(
+                        db,
+                        "SCHEDULE_RELEASED",
+                        root,
+                        proposal,
+                        base,
+                        actor["id"],
+                        revision_id=proposal["base_revision_id"],
+                    )
                 return finish_key(db, saved, root["id"], proposal_id, 200), False
         if expired:
             fail(
                 409,
                 "PROPOSAL_EXPIRED",
-                "Yêu cầu đã đến giờ bắt đầu và được ghi nhận hết hạn.",
+                "Đề nghị đã hết hạn xử lý và được ghi nhận hết hiệu lực.",
                 expiration_committed=True,
             )
 
@@ -811,13 +910,22 @@ def expire_due(limit=100):
                 if (
                     proposal["status"] != "PENDING"
                     or proposal["expires_at"] > sec.now()
-                    or proposal["kind"] != "CREATE"
                 ):
                     return False
                 candidate = candidate_from_revision(
-                    db, proposal["candidate_revision_id"]
+                    db,
+                    proposal["candidate_revision_id"] or proposal["base_revision_id"],
                 )
-                lock_resources(db, candidate, [proposal["submitted_by"]])
+                lock_resources(
+                    db,
+                    candidate,
+                    [proposal["submitted_by"]],
+                    other_candidates=(
+                        [candidate_from_revision(db, proposal["base_revision_id"])]
+                        if proposal["base_revision_id"]
+                        else []
+                    ),
+                )
                 expire_one(db, root, proposal, candidate)
                 return True
 
@@ -885,7 +993,7 @@ def proposal_data(db, ctx, proposal_id):
     r = c.one(
         db,
         "SELECT * FROM schedule_revisions WHERE id=:id",
-        id=p["candidate_revision_id"],
+        id=p["candidate_revision_id"] or p["base_revision_id"],
     )
     if not can_read_revision(db, ctx[0], root, r):
         fail(404, "NOT_FOUND", "Không tìm thấy yêu cầu trong phạm vi của bạn.")
@@ -905,7 +1013,12 @@ def get_proposal(ctx, proposal_id):
         if (
             p["status"] == "PENDING"
             and p["expires_at"] > sec.now()
-            and p["kind"] == "CREATE"
+            and not root["cancelled_at"]
+            and (
+                not root["current_revision_id"]
+                if p["kind"] == "CREATE"
+                else root["current_revision_id"] == p["base_revision_id"]
+            )
         ):
             if p["submitted_by"] == ctx[0]["id"]:
                 allowed.append("WITHDRAW")
@@ -931,8 +1044,8 @@ def get_proposal(ctx, proposal_id):
             **summary(p, r),
             schedule_version=root["row_version"],
             submitted_by=user_ref(db, p["submitted_by"]),
-            candidate=revision_view(db, r),
-            base_comparison=None,
+            candidate=revision_view(db, r) if p["candidate_revision_id"] else None,
+            base_comparison=base_comparison(db, p),
             resolved_by=user_ref(db, p["resolved_by"]) if p["resolved_by"] else None,
             resolved_at=c.aware(p["resolved_at"]) if p["resolved_at"] else None,
             reason=p["reason"],
@@ -947,7 +1060,7 @@ def list_proposals(ctx, scope, status, page_no, page_size):
         result = []
         for p in c.rows(
             db,
-            "SELECT * FROM approval_proposals WHERE kind='CREATE' ORDER BY created_at DESC,id",
+            "SELECT * FROM approval_proposals ORDER BY created_at DESC,id",
         ):
             root = c.one(
                 db, "SELECT * FROM schedule_roots WHERE id=:id", id=p["schedule_id"]
@@ -955,7 +1068,7 @@ def list_proposals(ctx, scope, status, page_no, page_size):
             r = c.one(
                 db,
                 "SELECT * FROM schedule_revisions WHERE id=:id",
-                id=p["candidate_revision_id"],
+                id=p["candidate_revision_id"] or p["base_revision_id"],
             )
             if status and p["status"] != status:
                 continue
@@ -1012,7 +1125,12 @@ def get_schedule(ctx, schedule_id):
             id=schedule_id,
         ):
             pr = next(
-                (v for v in revisions if v["id"] == p["candidate_revision_id"]), None
+                (
+                    v
+                    for v in revisions
+                    if v["id"] == (p["candidate_revision_id"] or p["base_revision_id"])
+                ),
+                None,
             )
             if pr and can_read_revision(db, ctx[0], root, pr):
                 visible.append(summary(p, pr))
@@ -1041,7 +1159,7 @@ def get_schedule(ctx, schedule_id):
             ),
             visible_proposals=visible,
             cancellation=cancellation,
-            allowed_actions=[],
+            allowed_actions=schedule_actions(db, ctx[0], root, r),
         )
 
 
@@ -1139,6 +1257,10 @@ def audit_history(ctx, schedule_id, page_no, page_size):
             "PROPOSAL_REJECTED": "Đã từ chối yêu cầu",
             "PROPOSAL_WITHDRAWN": "Người gửi đã rút yêu cầu",
             "PROPOSAL_EXPIRED": "Yêu cầu hết hạn xử lý",
+            "SCHEDULE_RELEASED": "Lịch cũ đã được thay thế và giải phóng chỗ",
+            "MEETING_CANCELLED": "Người tạo đã hủy lịch họp",
+            "CHANGE_SUBMITTED": "Đã gửi đề nghị sửa lịch",
+            "WORK_CANCELLATION_SUBMITTED": "Đã gửi đề nghị hủy công tác",
         }
         result = [
             dict(
@@ -1147,7 +1269,7 @@ def audit_history(ctx, schedule_id, page_no, page_size):
                 actor=user_ref(db, a["actor_user_id"]) if a["actor_user_id"] else None,
                 revision_id=a["revision_id"],
                 occurred_at=c.aware(a["created_at"]),
-                summary=labels.get(a["action"], "Đã cập nhật hồ sơ"),
+                summary=audit_summary(a, labels),
             )
             for a in c.rows(
                 db,
@@ -1157,3 +1279,290 @@ def audit_history(ctx, schedule_id, page_no, page_size):
             if a["revision_id"] in ids
         ]
         return c.page(result, page_no, page_size)
+
+
+def active_owned(db, actor, root):
+    if actor["id"] != root["created_by"]:
+        fail(403, "FORBIDDEN", "Chỉ người tạo được sửa hoặc hủy lịch của mình.")
+    if not root["current_revision_id"] or root["cancelled_at"]:
+        fail(409, "SCHEDULE_NOT_ACTIVE", "Lịch phải đang có hiệu lực và chưa bị hủy.")
+    base = candidate_from_revision(db, root["current_revision_id"])
+    if c.utc(base.starts_at) <= sec.now():
+        fail(
+            409,
+            "ORIGINAL_SCHEDULE_STARTED",
+            "Lịch gốc đã bắt đầu, không thể sửa hoặc hủy theo quy trình này.",
+        )
+    return base
+
+
+def validate_change_kind(base, candidate):
+    if base.kind != candidate.kind:
+        fail(422, "SCHEDULE_KIND_CHANGED", "Không đổi loại họp/công tác khi sửa lịch.")
+    if base.kind == "WORK" and str(base.department_id) != str(candidate.department_id):
+        fail(
+            422,
+            "WORK_DEPARTMENT_CHANGED",
+            "Không chuyển phòng ban của lịch công tác đã có.",
+        )
+
+
+def submit_amendment(ctx, schedule_id, data, key, cancelling=False):
+    c.require_member(ctx)
+    operation = "REQUEST_WORK_CANCELLATION" if cancelling else "REQUEST_CHANGE"
+
+    def action():
+        with Session.begin() as db:
+            saved = claim_key(db, ctx[0]["id"], operation, schedule_id, data, key)
+            root = c.one(
+                db,
+                "SELECT * FROM schedule_roots WHERE id=:id FOR UPDATE",
+                id=schedule_id,
+            )
+            # Replay returns only IDs after rechecking the owner/session; it must
+            # not depend on the current base or original time still being active.
+            if saved["response_status"]:
+                c.one(
+                    db, "SELECT id FROM users WHERE id=:id FOR UPDATE", id=ctx[0]["id"]
+                )
+                actor = fresh_actor(db, ctx)
+                if actor["id"] != root["created_by"]:
+                    fail(403, "FORBIDDEN", "Chỉ người tạo được thực hiện thao tác này.")
+                return receipt(saved), True
+            pending = c.rows(
+                db,
+                "SELECT * FROM approval_proposals WHERE schedule_id=:id AND status='PENDING' FOR UPDATE",
+                id=schedule_id,
+            )
+            base = (
+                candidate_from_revision(db, root["current_revision_id"])
+                if root["current_revision_id"]
+                else (data.candidate if not cancelling else None)
+            )
+            if not base:
+                fail(409, "SCHEDULE_NOT_ACTIVE", "Lịch chưa được xác nhận.")
+            candidate = base if cancelling else data.candidate
+            lock_resources(db, candidate, [ctx[0]["id"]], other_candidates=[base])
+            actor = fresh_actor(db, ctx)
+            base = active_owned(db, actor, root)
+            if root["row_version"] != data.expected_schedule_version:
+                fail(
+                    409,
+                    "VERSION_CONFLICT",
+                    "Lịch đã thay đổi. Hãy tải lại trước khi gửi đề nghị.",
+                )
+            if pending:
+                fail(
+                    409,
+                    "PENDING_PROPOSAL_EXISTS",
+                    "Lịch đang có đề nghị chờ. Hãy rút đề nghị đó trước khi gửi bản mới.",
+                )
+            if cancelling:
+                if base.kind != "WORK":
+                    fail(
+                        422,
+                        "INVALID_SCHEDULE_KIND",
+                        "Lịch họp được hủy trực tiếp trước giờ bắt đầu.",
+                    )
+                if not approvers(db, base, actor["id"]):
+                    fail(
+                        422,
+                        "NO_ELIGIBLE_APPROVER",
+                        "Chưa có người duyệt công tác khác người gửi.",
+                    )
+                revision_id = None
+            else:
+                if str(data.base_revision_id) != root["current_revision_id"]:
+                    fail(
+                        409,
+                        "BASE_REVISION_CHANGED",
+                        "Phiên bản gốc đã thay đổi. Hãy tải lại lịch.",
+                    )
+                validate_change_kind(base, candidate)
+                context = {"base_revision_id": root["current_revision_id"]}
+                result, fingerprint = availability(
+                    db, actor, candidate, excluded=schedule_id, warning_context=context
+                )
+                check_result(
+                    result,
+                    fingerprint,
+                    actor,
+                    candidate,
+                    schedule_id,
+                    data.warning_acknowledgement_token,
+                    context,
+                )
+                revision_no = c.run(
+                    db,
+                    "SELECT MAX(revision_no)+1 FROM schedule_revisions WHERE schedule_id=:id",
+                    id=schedule_id,
+                ).scalar()
+                revision_id = insert_revision(
+                    db, actor, schedule_id, candidate, revision_no
+                )
+            proposal_id = c.uid()
+            c.run(
+                db,
+                """INSERT INTO approval_proposals(id,schedule_id,kind,submitted_by,base_revision_id,candidate_revision_id,expires_at,reason)
+                VALUES(:id,:s,:kind,:u,:base,:candidate,:expires,:reason)""",
+                id=proposal_id,
+                s=schedule_id,
+                kind="CANCEL" if cancelling else "CHANGE",
+                u=actor["id"],
+                base=root["current_revision_id"],
+                candidate=revision_id,
+                expires=(
+                    c.utc(base.starts_at)
+                    if cancelling
+                    else min(c.utc(base.starts_at), c.utc(candidate.starts_at))
+                ),
+                reason=data.reason if cancelling else None,
+            )
+            c.run(
+                db,
+                "UPDATE schedule_roots SET row_version=row_version+1 WHERE id=:id",
+                id=schedule_id,
+            )
+            proposal = c.one(
+                db, "SELECT * FROM approval_proposals WHERE id=:id", id=proposal_id
+            )
+            notify(
+                db,
+                "WORK_CANCELLATION_SUBMITTED" if cancelling else "CHANGE_SUBMITTED",
+                root,
+                proposal,
+                candidate,
+                actor["id"],
+                metadata={"request_reason": data.reason} if cancelling else None,
+            )
+            return finish_key(db, saved, schedule_id, proposal_id, 201), False
+
+    return transaction_retry(action)
+
+
+def cancel_meeting(ctx, schedule_id, data, key):
+    c.require_member(ctx)
+
+    def action():
+        with Session.begin() as db:
+            saved = claim_key(
+                db, ctx[0]["id"], "CANCEL_MEETING", schedule_id, data, key
+            )
+            root = c.one(
+                db,
+                "SELECT * FROM schedule_roots WHERE id=:id FOR UPDATE",
+                id=schedule_id,
+            )
+            pending = c.rows(
+                db,
+                "SELECT * FROM approval_proposals WHERE schedule_id=:id AND status='PENDING' FOR UPDATE",
+                id=schedule_id,
+            )
+            if not root["current_revision_id"]:
+                fail(409, "SCHEDULE_NOT_ACTIVE", "Lịch chưa được xác nhận.")
+            base = candidate_from_revision(db, root["current_revision_id"])
+            others = [
+                candidate_from_revision(
+                    db, p["candidate_revision_id"] or p["base_revision_id"]
+                )
+                for p in pending
+            ]
+            lock_resources(db, base, [ctx[0]["id"]], other_candidates=others)
+            actor = fresh_actor(db, ctx)
+            if actor["id"] != root["created_by"]:
+                fail(403, "FORBIDDEN", "Chỉ người tạo được hủy lịch họp.")
+            if saved["response_status"]:
+                return receipt(saved), True
+            active_owned(db, actor, root)
+            if root["row_version"] != data.expected_schedule_version:
+                fail(
+                    409,
+                    "VERSION_CONFLICT",
+                    "Lịch đã thay đổi. Hãy tải lại trước khi hủy.",
+                )
+            if base.kind != "MEETING":
+                fail(
+                    422,
+                    "INVALID_SCHEDULE_KIND",
+                    "Công tác cần gửi đề nghị hủy để người phụ trách duyệt.",
+                )
+            c.run(
+                db,
+                "UPDATE schedule_roots SET cancelled_at=:now,cancelled_by=:u,cancel_reason=:reason,row_version=row_version+1 WHERE id=:id",
+                now=sec.now(),
+                u=actor["id"],
+                reason=data.reason,
+                id=schedule_id,
+            )
+            for proposal in pending:
+                expire_one(
+                    db,
+                    root,
+                    proposal,
+                    candidate_from_revision(
+                        db,
+                        proposal["candidate_revision_id"]
+                        or proposal["base_revision_id"],
+                    ),
+                    reason="Lịch gốc đã được người tạo hủy.",
+                    bump_root=False,
+                )
+            notify(db, "MEETING_CANCELLED", root, None, base, actor["id"])
+            return finish_key(db, saved, schedule_id, None, 200), False
+
+    return transaction_retry(action)
+
+
+def base_comparison(db, proposal):
+    if not proposal["base_revision_id"]:
+        return None
+    base = candidate_from_revision(db, proposal["base_revision_id"])
+    fields = []
+    if proposal["candidate_revision_id"]:
+        new = candidate_from_revision(db, proposal["candidate_revision_id"])
+        old_data, new_data = candidate_json(base), candidate_json(new)
+        fields = [
+            ("participants" if k == "participant_user_ids" else k)
+            for k in old_data
+            if k != "kind" and old_data[k] != new_data.get(k)
+        ]
+    return dict(
+        revision_id=proposal["base_revision_id"],
+        starts_at=base.starts_at,
+        ends_at=base.ends_at,
+        room_id=str(base.room_id) if base.kind == "MEETING" else None,
+        department_id=str(base.department_id) if base.kind == "WORK" else None,
+        changed_fields=fields,
+    )
+
+
+def schedule_actions(db, viewer, root, revision):
+    if (
+        viewer["id"] != root["created_by"]
+        or not root["current_revision_id"]
+        or root["cancelled_at"]
+        or revision["starts_at"] <= sec.now()
+    ):
+        return []
+    pending = c.rows(
+        db,
+        "SELECT id FROM approval_proposals WHERE schedule_id=:id AND status='PENDING'",
+        id=root["id"],
+    )
+    actions = [] if pending else ["REQUEST_CHANGE"]
+    if root["kind"] == "MEETING":
+        actions.append("CANCEL_MEETING")
+    elif not pending:
+        actions.append("REQUEST_WORK_CANCELLATION")
+    return actions
+
+
+def audit_summary(entry, labels):
+    value = labels.get(entry["action"], "Đã cập nhật hồ sơ")
+    if entry["action"] == "WORK_CANCELLATION_SUBMITTED":
+        metadata = entry["safe_metadata"]
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        if metadata.get("request_reason"):
+            value += ": " + metadata["request_reason"]
+    return value

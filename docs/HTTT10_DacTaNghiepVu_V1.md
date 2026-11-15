@@ -947,4 +947,6 @@ Ngày 15/11/2026: mốc B (0.2.0) đã bổ sung quản trị tài khoản/quy�
 
 Ngày 15/11/2026: mốc C (0.3.0) đã bổ sung 12 API thực tế cho kiểm tra phương án, gửi/duyệt/từ chối/rút yêu cầu CREATE và tra cứu lịch/bản lịch/audit. Có khóa phòng/người dưới READ COMMITTED, kiểm tra phiên bản, token xác nhận cảnh báo, idempotency, tự hết hạn và outbox/delivery cùng giao dịch. Tổng API hiện tại là 40; bộ kiểm thử CREATE dùng HTTP adapter/transaction thật trên MySQL, gồm các kết nối duyệt cạnh tranh. Chi tiết và giới hạn ở `MocC_HuongDan.md` và `../verification/KetQuaKiemTraMocC.md`. CSDL baseline giữ nguyên.
 
-Bước kế tiếp là mốc D: sửa/hủy lịch đã duyệt theo các quyết định giữ lịch cũ và duyệt lại đã chốt. Chưa có tài liệu, gửi SMTP thật hoặc báo cáo. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.
+Ngày 15/11/2026: mốc D (0.4.0) đã cài CHANGE/CANCEL, hủy họp trực tiếp, giữ lịch cũ trong lúc chờ, chuyển current nhất quán khi duyệt và quyền lịch sử theo từng revision. Đổi phòng do người phụ trách phòng mới duyệt; hủy họp đồng thời vô hiệu bản sửa chờ; hết hạn lấy mốc DP-07. Tổng API thực tế là 43, CSDL baseline không đổi. Chi tiết và giới hạn xem `MocD_HuongDan.md` và `../verification/KetQuaKiemTraMocD.md`.
+
+Phần tiếp theo: quản lý tài liệu họp, worker gửi SMTP thật/thử lại, báo cáo theo kế hoạch và kiểm thử tổng thể Windows/Docker/LAN. Không tự thêm chức năng nghiệp vụ, cấp duyệt hoặc quyền xem riêng tư khi chuyển sang code.

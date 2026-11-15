@@ -123,3 +123,53 @@ def audit(
     schedule_id: UUID, page: Page = 1, page_size: Size = 20, ctx=Depends(identity)
 ):
     return service.audit_history(ctx, str(schedule_id), page, page_size)
+
+
+@router.post(
+    "/schedules/{schedule_id}/change-proposals",
+    response_model=s.CommandReceipt,
+    status_code=201,
+)
+def change(
+    schedule_id: UUID,
+    data: s.ChangeRequest,
+    response: Response,
+    key: Key,
+    ctx=Depends(identity),
+):
+    return command_response(
+        response, service.submit_amendment(ctx, str(schedule_id), data, key)
+    )
+
+
+@router.post(
+    "/schedules/{schedule_id}/meeting-cancellations", response_model=s.CommandReceipt
+)
+def cancel_meeting(
+    schedule_id: UUID,
+    data: s.CancellationRequest,
+    response: Response,
+    key: Key,
+    ctx=Depends(identity),
+):
+    return command_response(
+        response, service.cancel_meeting(ctx, str(schedule_id), data, key)
+    )
+
+
+@router.post(
+    "/schedules/{schedule_id}/work-cancellation-proposals",
+    response_model=s.CommandReceipt,
+    status_code=201,
+)
+def cancel_work(
+    schedule_id: UUID,
+    data: s.CancellationRequest,
+    response: Response,
+    key: Key,
+    ctx=Depends(identity),
+):
+    return command_response(
+        response,
+        service.submit_amendment(ctx, str(schedule_id), data, key, cancelling=True),
+    )

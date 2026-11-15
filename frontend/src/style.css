@@ -1172,3 +1172,34 @@ textarea:focus {
     min-width: 0;
   }
 }
+.base-comparison,
+.historical-revision {
+  background: #f5f8f3;
+  border: 1px solid #dce6df;
+  border-radius: 9px;
+  padding: 18px;
+  margin: 20px 0;
+}
+.base-comparison h4 {
+  margin-top: 0;
+}
+.base-comparison p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.version-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.version-buttons button {
+  font-size: 12px;
+  padding: 9px 12px;
+}
+.schedule-form .heading h2 {
+  margin: 0;
+  font-size: 24px;
+}
+.scheduling-panel .modal-footer {
+  flex-wrap: wrap;
+}

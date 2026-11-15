@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { stamp, commandKey } from "./api";
+import { stamp, commandKey, localInput, allPages } from "./api";
 
 const statusNames = {
   PENDING: "Chờ duyệt",
@@ -137,6 +137,10 @@ export default function Scheduling({
     [schedule, setSchedule] = useState(null),
     [audit, setAudit] = useState([]),
     [reason, setReason] = useState("");
+  const [editing, setEditing] = useState(null),
+    [cancelDraft, setCancelDraft] = useState(null);
+  const [versions, setVersions] = useState([]),
+    [viewedRevision, setViewedRevision] = useState(null);
   // Kept in memory while navigating tabs. A retry keeps the original key and body.
   const [intent, setIntent] = useState(null),
     [warning, setWarning] = useState(null),
@@ -145,10 +149,17 @@ export default function Scheduling({
   const active = modes.includes(mode);
   const eligiblePeople =
     draft.kind === "WORK"
-      ? directory.filter((p) => p.department_id === user.department_id)
+      ? directory.filter(
+          (p) =>
+            p.department_id ===
+            (editing?.current_revision.department_id || user.department_id),
+        )
       : directory;
   const names = new Map(
-    directory.map((p) => [p.id, p.full_name + " · " + p.employee_code]),
+    [
+      ...(editing?.current_revision.participants.map((p) => p.user) || []),
+      ...directory,
+    ].map((p) => [p.id, p.full_name + " · " + p.employee_code]),
   );
   async function fetchList(pageNo = page) {
     if (mode === "new_schedule" || !active) return;
@@ -163,6 +174,12 @@ export default function Scheduling({
     setPage(pageNo);
   }
   useEffect(() => {
+    if (editing && mode !== "my_schedules") {
+      setEditing(null);
+      setDraft(initialDraft(user));
+      setChecked(null);
+      setAck(false);
+    }
     if (active) {
       setError("");
       setNotice("");
@@ -215,7 +232,8 @@ export default function Scheduling({
       };
     return {
       ...common,
-      department_id: user.department_id,
+      department_id:
+        editing?.current_revision.department_id || user.department_id,
       work_location: draft.work_location,
       work_context: draft.work_context,
       participant_user_ids: draft.participants.map((p) => p.user_id),
@@ -232,7 +250,10 @@ export default function Scheduling({
       const value = candidate();
       setChecked({
         candidate: value,
-        result: await api("/availability/check", "POST", { candidate: value }),
+        result: await api("/availability/check", "POST", {
+          candidate: value,
+          ...(editing ? { exclude_schedule_id: editing.id } : {}),
+        }),
       });
     } catch (e) {
       setError(e.message);
@@ -250,11 +271,32 @@ export default function Scheduling({
     setBusy(true);
     setError("");
     try {
-      const value = await api("/schedules/" + id);
-      const history =
-        value.visibility === "DETAIL"
-          ? (await api("/schedules/" + id + "/audit")).items
-          : [];
+      let value = null;
+      let rootError = null;
+      try {
+        value = await api("/schedules/" + id);
+      } catch (e) {
+        if (e.status !== 404) throw e;
+        rootError = e;
+      }
+      let historyVersions = [];
+      try {
+        historyVersions = await allPages(
+          api,
+          "/schedules/" + id + "/revisions",
+        );
+      } catch (e) {
+        if (e.status !== 404) throw e;
+      }
+      if (!value && !historyVersions.length) throw rootError;
+      if (!value) value = { visibility: "HISTORY_ONLY" };
+      const history = historyVersions.length
+        ? await allPages(api, "/schedules/" + id + "/audit")
+        : [];
+      setVersions(historyVersions);
+      setViewedRevision(
+        value.visibility === "HISTORY_ONLY" ? historyVersions[0] : null,
+      );
       setAudit(history);
       setSchedule(value);
       setProposal(null);
@@ -264,6 +306,58 @@ export default function Scheduling({
       setBusy(false);
     }
   }
+  function beginEdit(value) {
+    const r = value.current_revision;
+    setEditing(value);
+    setSchedule(null);
+    setChecked(null);
+    setAck(false);
+    setError("");
+    setNotice("");
+    setNewParticipant("");
+    setDraft({
+      kind: r.kind,
+      title: r.title,
+      description: r.description,
+      start: localInput(r.starts_at),
+      end: localInput(r.ends_at),
+      room_id: r.room_id || "",
+      chair_user_id: r.chair_user_id || user.id,
+      participants: r.participants.map((p) => ({
+        user_id: p.user.id,
+        is_required: p.is_required,
+      })),
+      work_location: r.work_location || "",
+      work_context: r.work_context || "EXTERNAL",
+    });
+  }
+  async function leaveEdit() {
+    const id = editing.id;
+    setEditing(null);
+    setDraft(initialDraft(user));
+    setChecked(null);
+    setAck(false);
+    setError("");
+    await openSchedule(id);
+  }
+  function requestCancellation(e) {
+    e.preventDefault();
+    const value = cancelDraft;
+    command(
+      "/schedules/" +
+        value.schedule.id +
+        (value.work
+          ? "/work-cancellation-proposals"
+          : "/meeting-cancellations"),
+      {
+        expected_schedule_version: value.schedule.row_version,
+        reason: value.reason.trim(),
+      },
+      value.work
+        ? "Đã gửi đề nghị hủy. Lịch công tác vẫn có hiệu lực trong lúc chờ."
+        : "Đã hủy lịch họp và giải phóng phòng/người.",
+    );
+  }
   async function attempt(value) {
     setBusy(true);
     setError("");
@@ -272,7 +366,7 @@ export default function Scheduling({
     let receipt;
     try {
       receipt = await api(value.path, "POST", value.body, { key: value.key });
-      if (!receipt?.committed || !receipt?.proposal_id)
+      if (!receipt?.committed || !receipt?.schedule_id)
         throw new Error("Chưa nhận được biên nhận hợp lệ.");
     } catch (e) {
       if (e.code === "WARNINGS_REQUIRE_ACK") {
@@ -297,9 +391,12 @@ export default function Scheduling({
     setChecked(null);
     setAck(false);
     setNotice(value.message);
-    if (value.creating) setDraft(initialDraft(user));
+    if (value.creating || value.amending) setDraft(initialDraft(user));
+    if (value.amending) setEditing(null);
+    setCancelDraft(null);
     try {
-      await openProposal(receipt.proposal_id);
+      if (receipt.proposal_id) await openProposal(receipt.proposal_id);
+      else await openSchedule(receipt.schedule_id);
       await fetchList();
     } catch {
       setError(
@@ -308,9 +405,16 @@ export default function Scheduling({
     }
     setBusy(false);
   }
-  function command(path, body, message, creating = false) {
+  function command(path, body, message, creating = false, options = {}) {
     if (intent) return;
-    const value = { path, body, message, creating, key: commandKey() };
+    const value = {
+      path,
+      body,
+      message,
+      creating,
+      key: commandKey(),
+      ...options,
+    };
     setIntent(value);
     attempt(value);
   }
@@ -322,17 +426,31 @@ export default function Scheduling({
     )
       return;
     command(
-      draft.kind === "MEETING" ? "/meeting-proposals" : "/work-proposals",
+      editing
+        ? "/schedules/" + editing.id + "/change-proposals"
+        : draft.kind === "MEETING"
+          ? "/meeting-proposals"
+          : "/work-proposals",
       {
         candidate: checked.candidate,
         warning_acknowledgement_token: ack
           ? checked.result.warning_acknowledgement_token
           : null,
+        ...(editing
+          ? {
+              expected_schedule_version: editing.row_version,
+              base_revision_id: editing.current_revision.id,
+            }
+          : {}),
       },
-      "Đã gửi yêu cầu chờ duyệt. Lịch chưa được xác nhận và chưa giữ chỗ.",
-      true,
+      editing
+        ? "Đã gửi đề nghị sửa. Lịch gốc vẫn giữ nguyên trong lúc chờ."
+        : "Đã gửi yêu cầu chờ duyệt. Lịch chưa được xác nhận và chưa giữ chỗ.",
+      !editing,
+      { amending: !!editing },
     );
   }
+
   function resolve(action) {
     if (!proposal) return;
     if (action === "REJECT" && !reason.trim()) {
@@ -358,7 +476,11 @@ export default function Scheduling({
           reason: action === "REJECT" ? reason.trim() : null,
         },
         action === "APPROVE"
-          ? "Đã duyệt và xác nhận lịch."
+          ? proposal.kind === "CANCEL"
+            ? "Đã chấp thuận hủy công tác."
+            : proposal.kind === "CHANGE"
+              ? "Đã duyệt bản sửa và thay thế lịch gốc."
+              : "Đã duyệt và xác nhận lịch."
           : "Đã từ chối yêu cầu.",
       );
   }
@@ -388,12 +510,25 @@ export default function Scheduling({
           </button>
         </div>
       )}
-      {mode === "new_schedule" ? (
+      {mode === "new_schedule" || editing ? (
         <>
           <div className="info-line">
-            Đăng ký tạo yêu cầu chờ duyệt. Chỉ sau khi được duyệt, phòng và
-            người tham gia mới có lịch bận. Người gửi không được tự duyệt.
+            {editing
+              ? "Đề nghị sửa lịch: lịch gốc tiếp tục có hiệu lực và giữ chỗ trong lúc chờ. Chỉ khi bản sửa được duyệt mới thay thế lịch cũ."
+              : "Đăng ký tạo yêu cầu chờ duyệt. Chỉ sau khi được duyệt, phòng và người tham gia mới có lịch bận. Người gửi không được tự duyệt."}
           </div>
+          {editing && (
+            <div className="heading">
+              <h2>Đề nghị sửa lịch</h2>
+              <button
+                className="secondary compact"
+                disabled={blocked}
+                onClick={leaveEdit}
+              >
+                Quay lại hồ sơ
+              </button>
+            </div>
+          )}
           <form className="schedule-form" onSubmit={preflight}>
             <fieldset disabled={blocked} className="plain-fieldset">
               <div className="form-grid">
@@ -401,6 +536,7 @@ export default function Scheduling({
                   Loại lịch
                   <select
                     value={draft.kind}
+                    disabled={!!editing}
                     onChange={(e) => {
                       setNewParticipant("");
                       update({
@@ -652,7 +788,7 @@ export default function Scheduling({
                 }
                 onClick={submit}
               >
-                Gửi yêu cầu chờ duyệt
+                {editing ? "Gửi đề nghị sửa lịch" : "Gửi yêu cầu chờ duyệt"}
               </button>
             </div>
           )}
@@ -739,6 +875,17 @@ export default function Scheduling({
                         ? "Họp"
                         : "Công tác"}
                     </span>
+                    {item.status && (
+                      <span className="tag">
+                        {
+                          {
+                            CREATE: "Tạo lịch",
+                            CHANGE: "Đề nghị sửa",
+                            CANCEL: "Đề nghị hủy",
+                          }[item.kind]
+                        }
+                      </span>
+                    )}
                     <h3>{item.title}</h3>
                     <p className="muted">
                       {mode === "my_schedules"
@@ -809,11 +956,64 @@ export default function Scheduling({
               Người gửi: {proposal.submitted_by.full_name} · Hạn xử lý:{" "}
               {stamp(proposal.expires_at)}
             </p>
+            <span className="tag">
+              {
+                {
+                  CREATE: "Tạo lịch",
+                  CHANGE: "Đề nghị sửa",
+                  CANCEL: "Đề nghị hủy công tác",
+                }[proposal.kind]
+              }
+            </span>
+            {proposal.kind === "CANCEL" && <h3>{proposal.title}</h3>}
             <Revision
               value={proposal.candidate}
               rooms={rooms}
               departments={departments}
             />
+            {proposal.base_comparison && (
+              <div className="base-comparison">
+                <h4>
+                  {proposal.kind === "CANCEL"
+                    ? "Lịch công tác đề nghị hủy"
+                    : "So sánh với lịch gốc"}
+                </h4>
+                <p>
+                  {stamp(proposal.base_comparison.starts_at)} →{" "}
+                  {stamp(proposal.base_comparison.ends_at)}
+                </p>
+                {proposal.base_comparison.room_id && (
+                  <p>
+                    Phòng gốc:{" "}
+                    {rooms.find(
+                      (r) => r.id === proposal.base_comparison.room_id,
+                    )?.name || "Phòng họp"}
+                  </p>
+                )}
+                {proposal.kind === "CHANGE" && (
+                  <p className="muted">
+                    Nội dung thay đổi:{" "}
+                    {proposal.base_comparison.changed_fields
+                      .map(
+                        (k) =>
+                          ({
+                            title: "Tiêu đề",
+                            description: "Nội dung",
+                            starts_at: "Bắt đầu",
+                            ends_at: "Kết thúc",
+                            room_id: "Phòng họp",
+                            chair_user_id: "Chủ trì",
+                            participants: "Thành phần",
+                            department_id: "Phòng ban",
+                            work_location: "Địa điểm",
+                            work_context: "Phạm vi",
+                          })[k],
+                      )
+                      .join(", ") || "Không thay đổi trường hiển thị"}
+                  </p>
+                )}
+              </div>
+            )}
             {proposal.reason && (
               <p className="info-line">Lý do: {proposal.reason}</p>
             )}
@@ -832,8 +1032,11 @@ export default function Scheduling({
             )}
             {proposal.status === "PENDING" && (
               <p className="muted">
-                Yêu cầu đang chờ chưa giữ phòng/người. Nếu phát sinh xung đột,
-                thao tác duyệt có thể bị chặn.
+                {proposal.kind === "CREATE"
+                  ? "Yêu cầu đang chờ chưa giữ phòng/người. Nếu phát sinh xung đột, thao tác duyệt có thể bị chặn."
+                  : proposal.kind === "CHANGE"
+                    ? "Lịch gốc vẫn đang có hiệu lực. Phương án sửa chưa giữ chỗ mới và sẽ được kiểm tra lại lúc duyệt."
+                    : "Lịch công tác gốc vẫn có hiệu lực. Chỉ giải phóng lịch bận sau khi đề nghị hủy được chấp thuận."}
               </p>
             )}
             {proposal.allowed_actions.length > 0 && (
@@ -885,7 +1088,11 @@ export default function Scheduling({
                       disabled={blocked}
                       onClick={() => resolve("APPROVE")}
                     >
-                      Duyệt và xác nhận lịch
+                      {proposal.kind === "CANCEL"
+                        ? "Chấp thuận hủy công tác"
+                        : proposal.kind === "CHANGE"
+                          ? "Duyệt bản sửa lịch"
+                          : "Duyệt và xác nhận lịch"}
                     </button>
                   )}
                 </div>
@@ -965,7 +1172,7 @@ export default function Scheduling({
           </section>
         </div>
       )}
-      {schedule && (
+      {schedule && !cancelDraft && (
         <div className="modal-backdrop">
           <section
             className="modal"
@@ -975,14 +1182,32 @@ export default function Scheduling({
           >
             <div className="modal-heading">
               <h2 id="schedule-title">Hồ sơ lịch</h2>
-              <button className="text-button" onClick={() => setSchedule(null)}>
+              <button
+                className="text-button"
+                disabled={blocked}
+                onClick={() => {
+                  setSchedule(null);
+                  setViewedRevision(null);
+                  setError("");
+                }}
+              >
                 Đóng ×
               </button>
             </div>
+            {error && (
+              <div className="error" role="alert">
+                {error}
+              </div>
+            )}
             {schedule.visibility === "BUSY_ONLY" ? (
               <p>
                 Đã có lịch: {stamp(schedule.starts_at)} →{" "}
                 {stamp(schedule.ends_at)}
+              </p>
+            ) : schedule.visibility === "HISTORY_ONLY" ? (
+              <p className="info-line">
+                Bạn chỉ được xem các phiên bản lịch sử trong phạm vi của mình
+                bên dưới.
               </p>
             ) : (
               <>
@@ -1000,6 +1225,82 @@ export default function Scheduling({
                     Yêu cầu của tôi.
                   </p>
                 )}
+                {schedule.cancellation && (
+                  <div className="info-line">
+                    Đã hủy bởi {schedule.cancellation.cancelled_by.full_name}{" "}
+                    lúc {stamp(schedule.cancellation.cancelled_at)}. Lý do:{" "}
+                    {schedule.cancellation.reason}
+                  </div>
+                )}
+                {schedule.allowed_actions.length > 0 && (
+                  <div className="modal-footer">
+                    {schedule.allowed_actions.includes("REQUEST_CHANGE") && (
+                      <button
+                        className="secondary compact"
+                        disabled={blocked}
+                        onClick={() => beginEdit(schedule)}
+                      >
+                        Đề nghị sửa lịch
+                      </button>
+                    )}
+                    {schedule.allowed_actions.includes("CANCEL_MEETING") && (
+                      <button
+                        className="compact"
+                        disabled={blocked}
+                        onClick={() => {
+                          setCancelDraft({ schedule, work: false, reason: "" });
+                          setError("");
+                        }}
+                      >
+                        Hủy lịch họp
+                      </button>
+                    )}
+                    {schedule.allowed_actions.includes(
+                      "REQUEST_WORK_CANCELLATION",
+                    ) && (
+                      <button
+                        className="compact"
+                        disabled={blocked}
+                        onClick={() => {
+                          setCancelDraft({ schedule, work: true, reason: "" });
+                          setError("");
+                        }}
+                      >
+                        Đề nghị hủy công tác
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+            {!!versions.length && (
+              <>
+                <h4>Các phiên bản được phép xem</h4>
+                <div className="version-buttons">
+                  {versions.map((r) => (
+                    <button
+                      className="secondary compact"
+                      key={r.id}
+                      disabled={busy}
+                      onClick={() => setViewedRevision(r)}
+                    >
+                      Phiên bản {r.revision_no} · {stamp(r.starts_at)}
+                    </button>
+                  ))}
+                </div>
+                {viewedRevision && (
+                  <div className="historical-revision">
+                    <p className="info-line">
+                      Đang xem bản lịch sử số {viewedRevision.revision_no}.
+                      Quyền sửa/hủy chỉ áp dụng trên lịch đang có hiệu lực.
+                    </p>
+                    <Revision
+                      value={viewedRevision}
+                      rooms={rooms}
+                      departments={departments}
+                    />
+                  </div>
+                )}
                 <h4>Lịch sử xử lý</h4>
                 <ul className="audit-list">
                   {audit.map((a) => (
@@ -1014,6 +1315,96 @@ export default function Scheduling({
                 </ul>
               </>
             )}
+            {schedule.visibility === "DETAIL" && (
+              <button
+                className="secondary compact"
+                disabled={blocked}
+                onClick={() => openSchedule(schedule.id)}
+              >
+                Tải lại hồ sơ lịch
+              </button>
+            )}
+          </section>
+        </div>
+      )}
+      {cancelDraft && (
+        <div className="modal-backdrop">
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-title"
+          >
+            <h2 id="cancel-title">
+              {cancelDraft.work
+                ? "Đề nghị hủy công tác"
+                : "Xác nhận hủy lịch họp"}
+            </h2>
+            {error && (
+              <div className="error" role="alert">
+                {error}
+              </div>
+            )}
+            {uncertain && (
+              <button
+                className="compact"
+                disabled={busy}
+                onClick={() => attempt(intent)}
+              >
+                Thử lại cùng thao tác
+              </button>
+            )}
+            <p>
+              <b>{cancelDraft.schedule.current_revision.title}</b>
+            </p>
+            <p>
+              {stamp(cancelDraft.schedule.current_revision.starts_at)} →{" "}
+              {stamp(cancelDraft.schedule.current_revision.ends_at)}
+            </p>
+            <div className="info-line">
+              {cancelDraft.work
+                ? "Lịch công tác vẫn có hiệu lực trong lúc chờ. Người phụ trách phòng ban sẽ xét đề nghị hủy."
+                : "Hủy cuộc họp sẽ giải phóng phòng, thời gian chuyển tiếp và lịch bận do cuộc họp này tạo ra. Đề nghị sửa đang chờ (nếu có) sẽ hết hiệu lực."}
+            </div>
+            <form onSubmit={requestCancellation}>
+              <label>
+                Lý do hủy
+                <textarea
+                  required
+                  maxLength={1000}
+                  rows={4}
+                  disabled={blocked}
+                  value={cancelDraft.reason}
+                  onChange={(e) =>
+                    setCancelDraft({ ...cancelDraft, reason: e.target.value })
+                  }
+                />
+              </label>
+              <div className="modal-footer">
+                <button
+                  className="secondary compact"
+                  type="button"
+                  disabled={blocked}
+                  onClick={async () => {
+                    const id = cancelDraft.schedule.id;
+                    setCancelDraft(null);
+                    setError("");
+                    await openSchedule(id);
+                  }}
+                >
+                  Quay lại hồ sơ
+                </button>
+                <button
+                  className="compact"
+                  type="submit"
+                  disabled={blocked || !cancelDraft.reason.trim()}
+                >
+                  {cancelDraft.work
+                    ? "Gửi đề nghị hủy công tác"
+                    : "Xác nhận hủy lịch họp"}
+                </button>
+              </div>
+            </form>
           </section>
         </div>
       )}

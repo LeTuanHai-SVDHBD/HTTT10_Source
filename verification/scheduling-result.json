@@ -419,7 +419,7 @@
       "status": "PASS"
     },
     {
-      "name": "OpenAPI mốc C có 40 operation thật",
+      "name": "OpenAPI giữ đủ API gửi/duyệt mốc C",
       "status": "PASS"
     }
   ],
