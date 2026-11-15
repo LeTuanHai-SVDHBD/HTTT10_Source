@@ -10,6 +10,7 @@ export default function UsageReport({ api, rooms, user }) {
   const [from, setFrom] = useState(date(today));
   const [to, setTo] = useState(date(new Date(today.getTime() + 7 * 86400000)));
   const [selected, setSelected] = useState([]);
+  const [allRooms, setAllRooms] = useState(true);
   const [report, setReport] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,11 +28,14 @@ export default function UsageReport({ api, rooms, user }) {
     setError("");
     setBusy(true);
     try {
+      if (from >= to) throw new Error("Ngày kết thúc phải sau ngày bắt đầu.");
+      if (!allRooms && !selected.length)
+        throw new Error("Chọn ít nhất một phòng để xem báo cáo.");
       const query = new URLSearchParams({
         from: new Date(from + "T00:00:00").toISOString(),
         to: new Date(to + "T00:00:00").toISOString(),
       });
-      selected.forEach((id) => query.append("room_ids", id));
+      if (!allRooms) selected.forEach((id) => query.append("room_ids", id));
       setReport(await api("/reports/room-usage?" + query));
     } catch (e) {
       setError(e.message);
@@ -56,7 +60,7 @@ export default function UsageReport({ api, rooms, user }) {
     );
   }
   return (
-    <section>
+    <section className="usage-panel">
       <p className="info-line">
         Số liệu theo kế hoạch đặt phòng, không chứng minh phòng đã được sử dụng
         thực tế. Tỷ lệ chỉ tính giờ họp trong giờ phục vụ; thời gian chuyển tiếp
@@ -83,31 +87,51 @@ export default function UsageReport({ api, rooms, user }) {
             onChange={(e) => update(setTo, e.target.value)}
           />
         </label>
-        <label>
-          Phòng trong báo cáo
-          <select
-            multiple
-            size={Math.min(5, Math.max(2, allowed.length))}
-            disabled={busy}
-            value={selected}
-            onChange={(e) =>
-              update(
-                setSelected,
-                Array.from(e.target.selectedOptions, (o) => o.value),
-              )
-            }
-          >
-            {allowed.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.code} · {r.name}
-              </option>
-            ))}
-          </select>
+        <fieldset className="report-room-picker" disabled={busy}>
+          <legend>Phòng trong báo cáo</legend>
+          <label className="check">
+            <input
+              type="radio"
+              name="report-room-mode"
+              checked={allRooms}
+              onChange={() => update(setAllRooms, true)}
+            />
+            Tất cả phòng được phép
+          </label>
+          <label className="check">
+            <input
+              type="radio"
+              name="report-room-mode"
+              checked={!allRooms}
+              onChange={() => update(setAllRooms, false)}
+            />
+            Chọn phòng cụ thể
+          </label>
+          {!allRooms && (
+            <div className="report-room-options">
+              {allowed.map((r) => (
+                <label className="check" key={r.id}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(r.id)}
+                    onChange={(e) =>
+                      update(
+                        setSelected,
+                        e.target.checked
+                          ? [...selected, r.id]
+                          : selected.filter((id) => id !== r.id),
+                      )
+                    }
+                  />
+                  {r.code} · {r.name}
+                </label>
+              ))}
+            </div>
+          )}
           <small>
-            Không chọn nghĩa là tất cả phòng trong phạm vi được phép. Tối đa 366
-            ngày.
+            Tối đa 366 ngày. Chỉ tổng hợp phòng trong phạm vi của bạn.
           </small>
-        </label>
+        </fieldset>
         <button className="compact" disabled={busy}>
           {busy ? "Đang tính…" : "Xem báo cáo"}
         </button>
@@ -119,6 +143,30 @@ export default function UsageReport({ api, rooms, user }) {
       )}
       {report && (
         <>
+          <div className="report-metrics" aria-label="Tổng quan báo cáo">
+            <div className="metric-card">
+              <span>Lượt đã xác nhận</span>
+              <strong>{report.total.confirmed_count}</strong>
+              <small>Trong khoảng đang xem</small>
+            </div>
+            <div className="metric-card">
+              <span>Tổng giờ họp</span>
+              <strong>
+                {hours(report.total.meeting_hours)} <small>giờ</small>
+              </strong>
+              <small>Không tính thời gian chuyển tiếp</small>
+            </div>
+            <div className="metric-card">
+              <span>Tỷ lệ theo kế hoạch</span>
+              <strong>{rate(report.total.planned_rate_percent)}</strong>
+              <small>Theo tổng giờ phục vụ</small>
+            </div>
+            <div className="metric-card">
+              <span>Lượt đã hủy</span>
+              <strong>{report.total.cancelled_count}</strong>
+              <small>Không cộng vào giờ họp</small>
+            </div>
+          </div>
           <p>
             Khoảng báo cáo: {stamp(report.period_from)} →{" "}
             {stamp(report.period_to)}. Lập lúc {stamp(report.generated_at)}.
@@ -126,8 +174,16 @@ export default function UsageReport({ api, rooms, user }) {
           {!report.rooms.length && (
             <p>Không có phòng trong phạm vi báo cáo hiện tại.</p>
           )}
-          <div className="table-wrap">
-            <table>
+          <p className="table-hint">
+            Có thể cuộn ngang bảng để xem đầy đủ các chỉ số.
+          </p>
+          <div
+            className="table-wrap"
+            role="region"
+            aria-label="Số liệu phòng, có thể cuộn ngang"
+            tabIndex={0}
+          >
+            <table className="usage-table">
               <caption>Báo cáo sử dụng phòng theo kế hoạch</caption>
               <thead>
                 <tr>

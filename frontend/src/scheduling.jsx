@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Documents } from "./documents";
+import { Dialog } from "./ui";
 import { stamp, commandKey, localInput, allPages } from "./api";
 
 const statusNames = {
@@ -934,531 +935,529 @@ export default function Scheduling({
         </>
       )}
       {proposal && !warning && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="proposal-title"
-          >
-            <div className="modal-heading">
-              <h2 id="proposal-title">Chi tiết yêu cầu</h2>
-              <button
-                className="text-button"
-                disabled={!!intent || busy}
-                onClick={() => {
-                  setProposal(null);
-                  setError("");
-                }}
-              >
-                Đóng ×
-              </button>
+        <Dialog
+          labelledBy="proposal-title"
+          busy={blocked}
+          onClose={() => {
+            setProposal(null);
+            setError("");
+          }}
+        >
+          <div className="modal-heading">
+            <h2 id="proposal-title">Chi tiết yêu cầu</h2>
+            <button
+              className="text-button"
+              disabled={!!intent || busy}
+              onClick={() => {
+                setProposal(null);
+                setError("");
+              }}
+            >
+              Đóng ×
+            </button>
+          </div>
+          {error && (
+            <div role="alert" className="error">
+              {error}
             </div>
-            {error && (
-              <div role="alert" className="error">
-                {error}
-              </div>
-            )}
-            {uncertain && (
-              <button
-                className="compact"
-                disabled={busy}
-                onClick={() => attempt(intent)}
-              >
-                Thử lại cùng thao tác
-              </button>
-            )}
-            <span className={"tag state-" + proposal.status.toLowerCase()}>
-              {statusNames[proposal.status]}
-            </span>
-            <p className="muted">
-              Người gửi: {proposal.submitted_by.full_name} · Hạn xử lý:{" "}
-              {stamp(proposal.expires_at)}
-            </p>
-            <span className="tag">
+          )}
+          {uncertain && (
+            <button
+              className="compact"
+              disabled={busy}
+              onClick={() => attempt(intent)}
+            >
+              Thử lại cùng thao tác
+            </button>
+          )}
+          <span className={"tag state-" + proposal.status.toLowerCase()}>
+            {statusNames[proposal.status]}
+          </span>
+          <p className="muted">
+            Người gửi: {proposal.submitted_by.full_name} · Hạn xử lý:{" "}
+            {stamp(proposal.expires_at)}
+          </p>
+          <span className="tag">
+            {
               {
-                {
-                  CREATE: "Tạo lịch",
-                  CHANGE: "Đề nghị sửa",
-                  CANCEL: "Đề nghị hủy công tác",
-                }[proposal.kind]
+                CREATE: "Tạo lịch",
+                CHANGE: "Đề nghị sửa",
+                CANCEL: "Đề nghị hủy công tác",
+              }[proposal.kind]
+            }
+          </span>
+          {proposal.kind === "CANCEL" && <h3>{proposal.title}</h3>}
+          <Revision
+            value={proposal.candidate}
+            rooms={rooms}
+            departments={departments}
+          />
+          {proposal.candidate?.kind === "MEETING" && (
+            <Documents
+              key={proposal.candidate.id}
+              api={api}
+              scheduleId={proposal.schedule_id}
+              revisionId={proposal.candidate.id}
+              canUpload={
+                proposal.submitted_by.id === user.id &&
+                proposal.status === "PENDING" &&
+                new Date(proposal.expires_at) > new Date()
               }
-            </span>
-            {proposal.kind === "CANCEL" && <h3>{proposal.title}</h3>}
-            <Revision
-              value={proposal.candidate}
-              rooms={rooms}
-              departments={departments}
             />
-            {proposal.candidate?.kind === "MEETING" && (
-              <Documents
-                key={proposal.candidate.id}
-                api={api}
-                scheduleId={proposal.schedule_id}
-                revisionId={proposal.candidate.id}
-                canUpload={
-                  proposal.submitted_by.id === user.id &&
-                  proposal.status === "PENDING" &&
-                  new Date(proposal.expires_at) > new Date()
-                }
-              />
-            )}
-            {proposal.base_comparison && (
-              <div className="base-comparison">
-                <h4>
-                  {proposal.kind === "CANCEL"
-                    ? "Lịch công tác đề nghị hủy"
-                    : "So sánh với lịch gốc"}
-                </h4>
-                <p>
-                  {stamp(proposal.base_comparison.starts_at)} →{" "}
-                  {stamp(proposal.base_comparison.ends_at)}
-                </p>
-                {proposal.base_comparison.room_id && (
-                  <p>
-                    Phòng gốc:{" "}
-                    {rooms.find(
-                      (r) => r.id === proposal.base_comparison.room_id,
-                    )?.name || "Phòng họp"}
-                  </p>
-                )}
-                {proposal.kind === "CHANGE" && (
-                  <p className="muted">
-                    Nội dung thay đổi:{" "}
-                    {proposal.base_comparison.changed_fields
-                      .map(
-                        (k) =>
-                          ({
-                            title: "Tiêu đề",
-                            description: "Nội dung",
-                            starts_at: "Bắt đầu",
-                            ends_at: "Kết thúc",
-                            room_id: "Phòng họp",
-                            chair_user_id: "Chủ trì",
-                            participants: "Thành phần",
-                            department_id: "Phòng ban",
-                            work_location: "Địa điểm",
-                            work_context: "Phạm vi",
-                          })[k],
-                      )
-                      .join(", ") || "Không thay đổi trường hiển thị"}
-                  </p>
-                )}
-              </div>
-            )}
-            {proposal.reason && (
-              <p className="info-line">Lý do: {proposal.reason}</p>
-            )}
-            {proposal.resolved_by && (
-              <p className="muted">
-                Xử lý bởi {proposal.resolved_by.full_name} ·{" "}
-                {stamp(proposal.resolved_at)}
-              </p>
-            )}
-            {proposal.email_summary && (
-              <p className="info-line">
-                Thông báo: {proposal.email_summary.pending} chờ gửi,{" "}
-                {proposal.email_summary.smtp_accepted} được máy chủ SMTP tiếp
-                nhận. Gửi email thật sẽ được triển khai ở mốc sau.
-              </p>
-            )}
-            {proposal.status === "PENDING" && (
-              <p className="muted">
-                {proposal.kind === "CREATE"
-                  ? "Yêu cầu đang chờ chưa giữ phòng/người. Nếu phát sinh xung đột, thao tác duyệt có thể bị chặn."
-                  : proposal.kind === "CHANGE"
-                    ? "Lịch gốc vẫn đang có hiệu lực. Phương án sửa chưa giữ chỗ mới và sẽ được kiểm tra lại lúc duyệt."
-                    : "Lịch công tác gốc vẫn có hiệu lực. Chỉ giải phóng lịch bận sau khi đề nghị hủy được chấp thuận."}
-              </p>
-            )}
-            {proposal.allowed_actions.length > 0 && (
-              <>
-                <label>
-                  Lý do (bắt buộc khi từ chối)
-                  <textarea
-                    rows={3}
-                    maxLength={1000}
-                    value={reason}
-                    disabled={blocked}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
-                </label>
-                <div className="modal-footer">
-                  <button
-                    className="secondary compact"
-                    disabled={blocked}
-                    onClick={() => {
-                      setBusy(true);
-                      openProposal(proposal.id)
-                        .catch((e) => setError(e.message))
-                        .finally(() => setBusy(false));
-                    }}
-                  >
-                    Tải trạng thái mới
-                  </button>
-                  {proposal.allowed_actions.includes("WITHDRAW") && (
-                    <button
-                      className="compact"
-                      disabled={blocked}
-                      onClick={() => resolve("WITHDRAW")}
-                    >
-                      Rút yêu cầu
-                    </button>
-                  )}
-                  {proposal.allowed_actions.includes("REJECT") && (
-                    <button
-                      className="secondary compact"
-                      disabled={blocked}
-                      onClick={() => resolve("REJECT")}
-                    >
-                      Từ chối
-                    </button>
-                  )}
-                  {proposal.allowed_actions.includes("APPROVE") && (
-                    <button
-                      className="compact"
-                      disabled={blocked}
-                      onClick={() => resolve("APPROVE")}
-                    >
-                      {proposal.kind === "CANCEL"
-                        ? "Chấp thuận hủy công tác"
-                        : proposal.kind === "CHANGE"
-                          ? "Duyệt bản sửa lịch"
-                          : "Duyệt và xác nhận lịch"}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </section>
-        </div>
-      )}
-      {warning && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="warning-title"
-          >
-            <h2 id="warning-title">Cần xác nhận cảnh báo hiện tại</h2>
-            {error && (
-              <div className="error" role="alert">
-                {error}
-              </div>
-            )}
-            {uncertain && (
-              <button
-                className="compact"
-                disabled={busy}
-                onClick={() => attempt(intent)}
-              >
-                Thử lại cùng thao tác
-              </button>
-            )}
-            <p>
-              Thông tin đã thay đổi hoặc phương án có cảnh báo cần bạn xem lại
-              trước khi tiếp tục.
-            </p>
-            <Issues warnings={warning.warnings} />
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={confirmWarning}
-                disabled={busy}
-                onChange={(e) => setConfirmWarning(e.target.checked)}
-              />
-              Tôi đã đọc và đồng ý tiếp tục.
-            </label>
-            <div className="modal-footer">
-              <button
-                className="secondary compact"
-                disabled={busy}
-                onClick={() => {
-                  setIntent(null);
-                  setWarning(null);
-                  setError("");
-                }}
-              >
-                Quay lại kiểm tra
-              </button>
-              <button
-                className="compact"
-                disabled={busy || !confirmWarning}
-                onClick={() => {
-                  const value = {
-                    ...intent,
-                    body: {
-                      ...intent.body,
-                      warning_acknowledgement_token:
-                        warning.warning_acknowledgement_token,
-                    },
-                  };
-                  setIntent(value);
-                  attempt(value);
-                }}
-              >
-                Xác nhận và tiếp tục
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-      {schedule && !cancelDraft && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="schedule-title"
-          >
-            <div className="modal-heading">
-              <h2 id="schedule-title">Hồ sơ lịch</h2>
-              <button
-                className="text-button"
-                disabled={blocked}
-                onClick={() => {
-                  setSchedule(null);
-                  setViewedRevision(null);
-                  setError("");
-                }}
-              >
-                Đóng ×
-              </button>
-            </div>
-            {error && (
-              <div className="error" role="alert">
-                {error}
-              </div>
-            )}
-            {schedule.visibility === "BUSY_ONLY" ? (
+          )}
+          {proposal.base_comparison && (
+            <div className="base-comparison">
+              <h4>
+                {proposal.kind === "CANCEL"
+                  ? "Lịch công tác đề nghị hủy"
+                  : "So sánh với lịch gốc"}
+              </h4>
               <p>
-                Đã có lịch: {stamp(schedule.starts_at)} →{" "}
-                {stamp(schedule.ends_at)}
+                {stamp(proposal.base_comparison.starts_at)} →{" "}
+                {stamp(proposal.base_comparison.ends_at)}
               </p>
-            ) : schedule.visibility === "HISTORY_ONLY" ? (
-              <p className="info-line">
-                Bạn chỉ được xem các phiên bản lịch sử trong phạm vi của mình
-                bên dưới.
-              </p>
-            ) : (
-              <>
-                <span className="tag">
-                  {lifecycleNames[schedule.lifecycle]}
-                </span>
-                <Revision
-                  value={schedule.current_revision}
-                  rooms={rooms}
-                  departments={departments}
-                />
-                {schedule.current_revision?.kind === "MEETING" && (
-                  <Documents
-                    key={schedule.current_revision.id}
-                    api={api}
-                    scheduleId={schedule.id}
-                    revisionId={schedule.current_revision.id}
-                    canUpload={
-                      schedule.created_by.id === user.id &&
-                      schedule.lifecycle === "ACTIVE"
-                    }
-                  />
-                )}
-                {!schedule.current_revision && (
-                  <p className="info-line">
-                    Lịch chưa có phiên bản được xác nhận. Xem yêu cầu tại mục
-                    Yêu cầu của tôi.
-                  </p>
-                )}
-                {schedule.cancellation && (
-                  <div className="info-line">
-                    Đã hủy bởi {schedule.cancellation.cancelled_by.full_name}{" "}
-                    lúc {stamp(schedule.cancellation.cancelled_at)}. Lý do:{" "}
-                    {schedule.cancellation.reason}
-                  </div>
-                )}
-                {schedule.allowed_actions.length > 0 && (
-                  <div className="modal-footer">
-                    {schedule.allowed_actions.includes("REQUEST_CHANGE") && (
-                      <button
-                        className="secondary compact"
-                        disabled={blocked}
-                        onClick={() => beginEdit(schedule)}
-                      >
-                        Đề nghị sửa lịch
-                      </button>
-                    )}
-                    {schedule.allowed_actions.includes("CANCEL_MEETING") && (
-                      <button
-                        className="compact"
-                        disabled={blocked}
-                        onClick={() => {
-                          setCancelDraft({ schedule, work: false, reason: "" });
-                          setError("");
-                        }}
-                      >
-                        Hủy lịch họp
-                      </button>
-                    )}
-                    {schedule.allowed_actions.includes(
-                      "REQUEST_WORK_CANCELLATION",
-                    ) && (
-                      <button
-                        className="compact"
-                        disabled={blocked}
-                        onClick={() => {
-                          setCancelDraft({ schedule, work: true, reason: "" });
-                          setError("");
-                        }}
-                      >
-                        Đề nghị hủy công tác
-                      </button>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-            {!!versions.length && (
-              <>
-                <h4>Các phiên bản được phép xem</h4>
-                <div className="version-buttons">
-                  {versions.map((r) => (
-                    <button
-                      className="secondary compact"
-                      key={r.id}
-                      disabled={busy}
-                      onClick={() => setViewedRevision(r)}
-                    >
-                      Phiên bản {r.revision_no} · {stamp(r.starts_at)}
-                    </button>
-                  ))}
-                </div>
-                {viewedRevision && (
-                  <div className="historical-revision">
-                    <p className="info-line">
-                      Đang xem bản lịch sử số {viewedRevision.revision_no}.
-                      Quyền sửa/hủy chỉ áp dụng trên lịch đang có hiệu lực.
-                    </p>
-                    <Revision
-                      value={viewedRevision}
-                      rooms={rooms}
-                      departments={departments}
-                    />
-                    {viewedRevision.kind === "MEETING" && (
-                      <Documents
-                        key={viewedRevision.id}
-                        api={api}
-                        scheduleId={schedule.id}
-                        revisionId={viewedRevision.id}
-                      />
-                    )}
-                  </div>
-                )}
-                <h4>Lịch sử xử lý</h4>
-                <ul className="audit-list">
-                  {audit.map((a) => (
-                    <li key={a.id}>
-                      <b>{a.summary}</b>
-                      <small>
-                        {a.actor?.full_name || "Hệ thống"} ·{" "}
-                        {stamp(a.occurred_at)}
-                      </small>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-            {schedule.visibility === "DETAIL" && (
-              <button
-                className="secondary compact"
-                disabled={blocked}
-                onClick={() => openSchedule(schedule.id)}
-              >
-                Tải lại hồ sơ lịch
-              </button>
-            )}
-          </section>
-        </div>
-      )}
-      {cancelDraft && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="cancel-title"
-          >
-            <h2 id="cancel-title">
-              {cancelDraft.work
-                ? "Đề nghị hủy công tác"
-                : "Xác nhận hủy lịch họp"}
-            </h2>
-            {error && (
-              <div className="error" role="alert">
-                {error}
-              </div>
-            )}
-            {uncertain && (
-              <button
-                className="compact"
-                disabled={busy}
-                onClick={() => attempt(intent)}
-              >
-                Thử lại cùng thao tác
-              </button>
-            )}
-            <p>
-              <b>{cancelDraft.schedule.current_revision.title}</b>
-            </p>
-            <p>
-              {stamp(cancelDraft.schedule.current_revision.starts_at)} →{" "}
-              {stamp(cancelDraft.schedule.current_revision.ends_at)}
-            </p>
-            <div className="info-line">
-              {cancelDraft.work
-                ? "Lịch công tác vẫn có hiệu lực trong lúc chờ. Người phụ trách phòng ban sẽ xét đề nghị hủy."
-                : "Hủy cuộc họp sẽ giải phóng phòng, thời gian chuyển tiếp và lịch bận do cuộc họp này tạo ra. Đề nghị sửa đang chờ (nếu có) sẽ hết hiệu lực."}
+              {proposal.base_comparison.room_id && (
+                <p>
+                  Phòng gốc:{" "}
+                  {rooms.find((r) => r.id === proposal.base_comparison.room_id)
+                    ?.name || "Phòng họp"}
+                </p>
+              )}
+              {proposal.kind === "CHANGE" && (
+                <p className="muted">
+                  Nội dung thay đổi:{" "}
+                  {proposal.base_comparison.changed_fields
+                    .map(
+                      (k) =>
+                        ({
+                          title: "Tiêu đề",
+                          description: "Nội dung",
+                          starts_at: "Bắt đầu",
+                          ends_at: "Kết thúc",
+                          room_id: "Phòng họp",
+                          chair_user_id: "Chủ trì",
+                          participants: "Thành phần",
+                          department_id: "Phòng ban",
+                          work_location: "Địa điểm",
+                          work_context: "Phạm vi",
+                        })[k],
+                    )
+                    .join(", ") || "Không thay đổi trường hiển thị"}
+                </p>
+              )}
             </div>
-            <form onSubmit={requestCancellation}>
+          )}
+          {proposal.reason && (
+            <p className="info-line">Lý do: {proposal.reason}</p>
+          )}
+          {proposal.resolved_by && (
+            <p className="muted">
+              Xử lý bởi {proposal.resolved_by.full_name} ·{" "}
+              {stamp(proposal.resolved_at)}
+            </p>
+          )}
+          {proposal.email_summary && (
+            <p className="info-line">
+              Thông báo: {proposal.email_summary.pending} chờ gửi,{" "}
+              {proposal.email_summary.smtp_accepted} được máy chủ SMTP tiếp
+              nhận. SMTP tiếp nhận chưa xác nhận thư đã tới hộp thư.
+            </p>
+          )}
+          {proposal.status === "PENDING" && (
+            <p className="muted">
+              {proposal.kind === "CREATE"
+                ? "Yêu cầu đang chờ chưa giữ phòng/người. Nếu phát sinh xung đột, thao tác duyệt có thể bị chặn."
+                : proposal.kind === "CHANGE"
+                  ? "Lịch gốc vẫn đang có hiệu lực. Phương án sửa chưa giữ chỗ mới và sẽ được kiểm tra lại lúc duyệt."
+                  : "Lịch công tác gốc vẫn có hiệu lực. Chỉ giải phóng lịch bận sau khi đề nghị hủy được chấp thuận."}
+            </p>
+          )}
+          {proposal.allowed_actions.length > 0 && (
+            <>
               <label>
-                Lý do hủy
+                Lý do (bắt buộc khi từ chối)
                 <textarea
-                  required
+                  rows={3}
                   maxLength={1000}
-                  rows={4}
+                  value={reason}
                   disabled={blocked}
-                  value={cancelDraft.reason}
-                  onChange={(e) =>
-                    setCancelDraft({ ...cancelDraft, reason: e.target.value })
-                  }
+                  onChange={(e) => setReason(e.target.value)}
                 />
               </label>
               <div className="modal-footer">
                 <button
                   className="secondary compact"
-                  type="button"
                   disabled={blocked}
-                  onClick={async () => {
-                    const id = cancelDraft.schedule.id;
-                    setCancelDraft(null);
-                    setError("");
-                    await openSchedule(id);
+                  onClick={() => {
+                    setBusy(true);
+                    openProposal(proposal.id)
+                      .catch((e) => setError(e.message))
+                      .finally(() => setBusy(false));
                   }}
                 >
-                  Quay lại hồ sơ
+                  Tải trạng thái mới
                 </button>
-                <button
-                  className="compact"
-                  type="submit"
-                  disabled={blocked || !cancelDraft.reason.trim()}
-                >
-                  {cancelDraft.work
-                    ? "Gửi đề nghị hủy công tác"
-                    : "Xác nhận hủy lịch họp"}
-                </button>
+                {proposal.allowed_actions.includes("WITHDRAW") && (
+                  <button
+                    className="compact"
+                    disabled={blocked}
+                    onClick={() => resolve("WITHDRAW")}
+                  >
+                    Rút yêu cầu
+                  </button>
+                )}
+                {proposal.allowed_actions.includes("REJECT") && (
+                  <button
+                    className="secondary compact"
+                    disabled={blocked}
+                    onClick={() => resolve("REJECT")}
+                  >
+                    Từ chối
+                  </button>
+                )}
+                {proposal.allowed_actions.includes("APPROVE") && (
+                  <button
+                    className="compact"
+                    disabled={blocked}
+                    onClick={() => resolve("APPROVE")}
+                  >
+                    {proposal.kind === "CANCEL"
+                      ? "Chấp thuận hủy công tác"
+                      : proposal.kind === "CHANGE"
+                        ? "Duyệt bản sửa lịch"
+                        : "Duyệt và xác nhận lịch"}
+                  </button>
+                )}
               </div>
-            </form>
-          </section>
-        </div>
+            </>
+          )}
+        </Dialog>
+      )}
+      {warning && (
+        <Dialog
+          labelledBy="warning-title"
+          busy={busy}
+          onClose={() => {
+            setWarning(null);
+            setIntent(null);
+            setUncertain(false);
+          }}
+        >
+          <h2 id="warning-title">Cần xác nhận cảnh báo hiện tại</h2>
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          {uncertain && (
+            <button
+              className="compact"
+              disabled={busy}
+              onClick={() => attempt(intent)}
+            >
+              Thử lại cùng thao tác
+            </button>
+          )}
+          <p>
+            Thông tin đã thay đổi hoặc phương án có cảnh báo cần bạn xem lại
+            trước khi tiếp tục.
+          </p>
+          <Issues warnings={warning.warnings} />
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={confirmWarning}
+              disabled={busy}
+              onChange={(e) => setConfirmWarning(e.target.checked)}
+            />
+            Tôi đã đọc và đồng ý tiếp tục.
+          </label>
+          <div className="modal-footer">
+            <button
+              className="secondary compact"
+              disabled={busy}
+              onClick={() => {
+                setIntent(null);
+                setWarning(null);
+                setError("");
+              }}
+            >
+              Quay lại kiểm tra
+            </button>
+            <button
+              className="compact"
+              disabled={busy || !confirmWarning}
+              onClick={() => {
+                const value = {
+                  ...intent,
+                  body: {
+                    ...intent.body,
+                    warning_acknowledgement_token:
+                      warning.warning_acknowledgement_token,
+                  },
+                };
+                setIntent(value);
+                attempt(value);
+              }}
+            >
+              Xác nhận và tiếp tục
+            </button>
+          </div>
+        </Dialog>
+      )}
+      {schedule && !cancelDraft && (
+        <Dialog
+          labelledBy="schedule-title"
+          busy={blocked}
+          onClose={() => {
+            setSchedule(null);
+            setViewedRevision(null);
+          }}
+        >
+          <div className="modal-heading">
+            <h2 id="schedule-title">Hồ sơ lịch</h2>
+            <button
+              className="text-button"
+              disabled={blocked}
+              onClick={() => {
+                setSchedule(null);
+                setViewedRevision(null);
+                setError("");
+              }}
+            >
+              Đóng ×
+            </button>
+          </div>
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          {schedule.visibility === "BUSY_ONLY" ? (
+            <p>
+              Đã có lịch: {stamp(schedule.starts_at)} →{" "}
+              {stamp(schedule.ends_at)}
+            </p>
+          ) : schedule.visibility === "HISTORY_ONLY" ? (
+            <p className="info-line">
+              Bạn chỉ được xem các phiên bản lịch sử trong phạm vi của mình bên
+              dưới.
+            </p>
+          ) : (
+            <>
+              <span className="tag">{lifecycleNames[schedule.lifecycle]}</span>
+              <Revision
+                value={schedule.current_revision}
+                rooms={rooms}
+                departments={departments}
+              />
+              {schedule.current_revision?.kind === "MEETING" && (
+                <Documents
+                  key={schedule.current_revision.id}
+                  api={api}
+                  scheduleId={schedule.id}
+                  revisionId={schedule.current_revision.id}
+                  canUpload={
+                    schedule.created_by.id === user.id &&
+                    schedule.lifecycle === "ACTIVE"
+                  }
+                />
+              )}
+              {!schedule.current_revision && (
+                <p className="info-line">
+                  Lịch chưa có phiên bản được xác nhận. Xem yêu cầu tại mục Yêu
+                  cầu của tôi.
+                </p>
+              )}
+              {schedule.cancellation && (
+                <div className="info-line">
+                  Đã hủy bởi {schedule.cancellation.cancelled_by.full_name} lúc{" "}
+                  {stamp(schedule.cancellation.cancelled_at)}. Lý do:{" "}
+                  {schedule.cancellation.reason}
+                </div>
+              )}
+              {schedule.allowed_actions.length > 0 && (
+                <div className="modal-footer">
+                  {schedule.allowed_actions.includes("REQUEST_CHANGE") && (
+                    <button
+                      className="secondary compact"
+                      disabled={blocked}
+                      onClick={() => beginEdit(schedule)}
+                    >
+                      Đề nghị sửa lịch
+                    </button>
+                  )}
+                  {schedule.allowed_actions.includes("CANCEL_MEETING") && (
+                    <button
+                      className="compact"
+                      disabled={blocked}
+                      onClick={() => {
+                        setCancelDraft({ schedule, work: false, reason: "" });
+                        setError("");
+                      }}
+                    >
+                      Hủy lịch họp
+                    </button>
+                  )}
+                  {schedule.allowed_actions.includes(
+                    "REQUEST_WORK_CANCELLATION",
+                  ) && (
+                    <button
+                      className="compact"
+                      disabled={blocked}
+                      onClick={() => {
+                        setCancelDraft({ schedule, work: true, reason: "" });
+                        setError("");
+                      }}
+                    >
+                      Đề nghị hủy công tác
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+          {!!versions.length && (
+            <>
+              <h4>Các phiên bản được phép xem</h4>
+              <div className="version-buttons">
+                {versions.map((r) => (
+                  <button
+                    className="secondary compact"
+                    key={r.id}
+                    disabled={busy}
+                    onClick={() => setViewedRevision(r)}
+                  >
+                    Phiên bản {r.revision_no} · {stamp(r.starts_at)}
+                  </button>
+                ))}
+              </div>
+              {viewedRevision && (
+                <div className="historical-revision">
+                  <p className="info-line">
+                    Đang xem bản lịch sử số {viewedRevision.revision_no}. Quyền
+                    sửa/hủy chỉ áp dụng trên lịch đang có hiệu lực.
+                  </p>
+                  <Revision
+                    value={viewedRevision}
+                    rooms={rooms}
+                    departments={departments}
+                  />
+                  {viewedRevision.kind === "MEETING" && (
+                    <Documents
+                      key={viewedRevision.id}
+                      api={api}
+                      scheduleId={schedule.id}
+                      revisionId={viewedRevision.id}
+                    />
+                  )}
+                </div>
+              )}
+              <h4>Lịch sử xử lý</h4>
+              <ul className="audit-list">
+                {audit.map((a) => (
+                  <li key={a.id}>
+                    <b>{a.summary}</b>
+                    <small>
+                      {a.actor?.full_name || "Hệ thống"} ·{" "}
+                      {stamp(a.occurred_at)}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {schedule.visibility === "DETAIL" && (
+            <button
+              className="secondary compact"
+              disabled={blocked}
+              onClick={() => openSchedule(schedule.id)}
+            >
+              Tải lại hồ sơ lịch
+            </button>
+          )}
+        </Dialog>
+      )}
+      {cancelDraft && (
+        <Dialog
+          labelledBy="cancel-title"
+          busy={blocked}
+          onClose={() => {
+            setCancelDraft(null);
+            setError("");
+          }}
+        >
+          <h2 id="cancel-title">
+            {cancelDraft.work
+              ? "Đề nghị hủy công tác"
+              : "Xác nhận hủy lịch họp"}
+          </h2>
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          {uncertain && (
+            <button
+              className="compact"
+              disabled={busy}
+              onClick={() => attempt(intent)}
+            >
+              Thử lại cùng thao tác
+            </button>
+          )}
+          <p>
+            <b>{cancelDraft.schedule.current_revision.title}</b>
+          </p>
+          <p>
+            {stamp(cancelDraft.schedule.current_revision.starts_at)} →{" "}
+            {stamp(cancelDraft.schedule.current_revision.ends_at)}
+          </p>
+          <div className="info-line">
+            {cancelDraft.work
+              ? "Lịch công tác vẫn có hiệu lực trong lúc chờ. Người phụ trách phòng ban sẽ xét đề nghị hủy."
+              : "Hủy cuộc họp sẽ giải phóng phòng, thời gian chuyển tiếp và lịch bận do cuộc họp này tạo ra. Đề nghị sửa đang chờ (nếu có) sẽ hết hiệu lực."}
+          </div>
+          <form onSubmit={requestCancellation}>
+            <label>
+              Lý do hủy
+              <textarea
+                required
+                maxLength={1000}
+                rows={4}
+                disabled={blocked}
+                value={cancelDraft.reason}
+                onChange={(e) =>
+                  setCancelDraft({ ...cancelDraft, reason: e.target.value })
+                }
+              />
+            </label>
+            <div className="modal-footer">
+              <button
+                className="secondary compact"
+                type="button"
+                disabled={blocked}
+                onClick={async () => {
+                  const id = cancelDraft.schedule.id;
+                  setCancelDraft(null);
+                  setError("");
+                  await openSchedule(id);
+                }}
+              >
+                Quay lại hồ sơ
+              </button>
+              <button
+                className="compact"
+                type="submit"
+                disabled={blocked || !cancelDraft.reason.trim()}
+              >
+                {cancelDraft.work
+                  ? "Gửi đề nghị hủy công tác"
+                  : "Xác nhận hủy lịch họp"}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

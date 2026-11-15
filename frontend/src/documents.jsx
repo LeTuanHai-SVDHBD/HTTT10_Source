@@ -180,7 +180,7 @@ export function Documents({ api, scheduleId, revisionId, canUpload = false }) {
         </p>
       )}
       {loading ? (
-        <p>Đang tải tài liệu…</p>
+        <p role="status">Đang tải tài liệu…</p>
       ) : (
         items.length === 0 && <p>Chưa có tài liệu trong phạm vi đang xem.</p>
       )}
@@ -265,9 +265,19 @@ export function Documents({ api, scheduleId, revisionId, canUpload = false }) {
             accept=".pdf,.docx,.pptx,.xlsx,.jpg,.jpeg,.png"
             disabled={disabled}
             required
+            aria-describedby={id + "-file-help"}
             onChange={(e) => setFile(e.target.files[0] || null)}
           />
-          <small>
+          {file && (
+            <p className="selected-file">
+              {file.name} ·{" "}
+              {(file.size / 1024 / 1024).toLocaleString("vi-VN", {
+                maximumFractionDigits: 2,
+              })}{" "}
+              MiB
+            </p>
+          )}
+          <small id={id + "-file-help"}>
             PDF, DOCX, PPTX, XLSX, JPG, JPEG, PNG · tối đa 20 MiB/tệp.
           </small>
           <button disabled={disabled || !file || (!target && !name.trim())}>

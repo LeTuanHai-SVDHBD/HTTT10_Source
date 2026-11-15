@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { allPages, roles, localInput, stamp } from "./api";
 import Scheduling from "./scheduling";
 import UsageReport from "./reports";
+import { Dialog, Icon, useSmallScreen } from "./ui";
 
 const tabs = {
   calendar: "Lịch công tác",
@@ -379,6 +380,11 @@ function EquipmentFields({ value, onChange }) {
 
 export default function Workspace({ api, user, logout, changePassword }) {
   const isAdmin = user.roles.includes("ADMIN");
+  const smallScreen = useSmallScreen();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!smallScreen) setMenuOpen(false);
+  }, [smallScreen]);
   const [tab, setTab] = useState(() =>
       new URLSearchParams(window.location.search).has("proposal")
         ? "my_proposals"
@@ -464,6 +470,7 @@ export default function Workspace({ api, user, logout, changePassword }) {
     setFinderFilter(filter);
   }
   function switchTab(value) {
+    setMenuOpen(false);
     setTab(value);
     setError("");
     setNotice("");
@@ -646,67 +653,135 @@ export default function Workspace({ api, user, logout, changePassword }) {
       setError("");
     }
   };
-  return (
-    <div className="workspace">
-      <aside className="sidebar">
+  const navigation = (
+    <div className="sidebar-body">
+      <div className="sidebar-brand">
         <div className="brand">
-          ▦ <b>HTTT10</b>
+          <span className="brand-mark">
+            <Icon name="calendar" size={25} />
+          </span>
+          <b>
+            HTTT10<span>Lịch công tác nội bộ</span>
+          </b>
         </div>
-        <p>LỊCH CÔNG TÁC NỘI BỘ</p>
-        <nav>
-          {Object.entries(tabs)
-            .filter(
-              ([k]) =>
-                (isAdmin || k !== "users") &&
-                (k !== "new_schedule" || user.roles.includes("EMPLOYEE")) &&
-                (k !== "review" || user.roles.includes("APPROVER")) &&
-                (k !== "reports" || isAdmin || user.roles.includes("APPROVER")),
-            )
-            .map(([k, v], i) => (
-              <button
-                key={k}
-                className={tab === k ? "nav active" : "nav"}
-                onClick={() => switchTab(k)}
-              >
-                <span aria-hidden="true">
+        {smallScreen && (
+          <button
+            type="button"
+            className="icon-button sidebar-close"
+            aria-label="Đóng menu"
+            onClick={() => setMenuOpen(false)}
+          >
+            <Icon name="close" />
+          </button>
+        )}
+      </div>
+      <p className="nav-caption">KHÔNG GIAN LÀM VIỆC</p>
+      <nav id="main-navigation" aria-label="Điều hướng chính">
+        {Object.entries(tabs)
+          .filter(
+            ([k]) =>
+              (isAdmin || k !== "users") &&
+              (k !== "new_schedule" || user.roles.includes("EMPLOYEE")) &&
+              (k !== "review" || user.roles.includes("APPROVER")) &&
+              (k !== "reports" || isAdmin || user.roles.includes("APPROVER")),
+          )
+          .map(([k, v]) => (
+            <button
+              key={k}
+              className={tab === k ? "nav active" : "nav"}
+              aria-current={tab === k ? "page" : undefined}
+              onClick={() => switchTab(k)}
+            >
+              <Icon
+                name={
                   {
-                    {
-                      calendar: "▦",
-                      finder: "⌕",
-                      new_schedule: "+",
-                      my_proposals: "▤",
-                      review: "✓",
-                      my_schedules: "◷",
-                      rooms: "▤",
-                      departments: "◫",
-                      users: "♙",
-                      reports: "▥",
-                    }[k]
-                  }
-                </span>
-                {v}
-              </button>
-            ))}
-        </nav>
-        <div className="sidebar-profile">
-          <b>{user.full_name}</b>
-          <small>{user.roles.map((r) => roles[r]).join(" · ")}</small>
+                    calendar: "calendar",
+                    finder: "search",
+                    new_schedule: "plus",
+                    my_proposals: "inbox",
+                    review: "check",
+                    my_schedules: "clock",
+                    rooms: "building",
+                    departments: "layers",
+                    users: "users",
+                    reports: "chart",
+                  }[k]
+                }
+              />
+              <span className="nav-label">{v}</span>
+              {tab === k && <span className="nav-dot" aria-hidden="true" />}
+            </button>
+          ))}
+      </nav>
+      <div className="sidebar-profile">
+        <div className="profile-summary">
+          <span className="avatar" aria-hidden="true">
+            {user.full_name
+              .trim()
+              .split(/\s+/)
+              .slice(-2)
+              .map((n) => n[0])
+              .join("")}
+          </span>
+          <div>
+            <b>{user.full_name}</b>
+            <small>{user.roles.map((r) => roles[r]).join(" · ")}</small>
+          </div>
+        </div>
+        <div className="profile-actions">
           <button className="nav" onClick={changePassword}>
-            Đổi mật khẩu
+            <Icon name="key" size={18} />
+            <span>Đổi mật khẩu</span>
           </button>
           <button className="nav" onClick={logout}>
-            Đăng xuất
+            <Icon name="logout" size={18} />
+            <span>Đăng xuất</span>
           </button>
         </div>
-      </aside>
+      </div>
+    </div>
+  );
+  return (
+    <div className="workspace">
+      <a className="skip-link" href="#workspace-content">
+        Đến nội dung chính
+      </a>
+      {!smallScreen && <aside className="sidebar">{navigation}</aside>}
+      {smallScreen && menuOpen && (
+        <Dialog
+          drawer
+          label="Menu điều hướng"
+          onClose={() => setMenuOpen(false)}
+        >
+          {navigation}
+        </Dialog>
+      )}
       <main className="work-main">
-        <header>
-          <span>
-            Không gian nội bộ <b>/ {tabs[tab]}</b>
+        <header className="workspace-header">
+          <div className="header-location">
+            {smallScreen && (
+              <button
+                type="button"
+                className="icon-button menu-toggle"
+                aria-label="Mở menu điều hướng"
+                aria-expanded={menuOpen}
+                aria-controls={menuOpen ? "main-navigation" : undefined}
+                onClick={() => setMenuOpen(true)}
+              >
+                <Icon name="menu" />
+              </button>
+            )}
+            <span className="breadcrumb">
+              Không gian nội bộ <span aria-hidden="true">/</span>{" "}
+              <b>{tabs[tab]}</b>
+            </span>
+          </div>
+          <span className="status">
+            <span className={loading ? "status-dot loading" : "status-dot"} />
+            {loading ? "Đang tải dữ liệu" : "Giờ Việt Nam · UTC+07"}
           </span>
-          <span className="status">● Đang kết nối</span>
         </header>
-        <section className="work-content">
+        <section className="work-content" id="workspace-content" tabIndex={-1}>
           <div className="heading">
             <div>
               <div className="eyebrow">ĐIỀU PHỐI CÔNG VIỆC</div>
@@ -1079,7 +1154,16 @@ export default function Workspace({ api, user, logout, changePassword }) {
                   ))}
                 </div>
               ) : (
-                <div className="table-wrap">
+                <div
+                  className="table-wrap"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={
+                    tab === "users"
+                      ? "Danh sách tài khoản, có thể cuộn ngang"
+                      : "Danh sách phòng ban, có thể cuộn ngang"
+                  }
+                >
                   <table>
                     <thead>
                       <tr>
@@ -1173,399 +1257,381 @@ export default function Workspace({ api, user, logout, changePassword }) {
         </section>
       </main>
       {editor && draft && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="editor-title"
-          >
-            <div className="modal-heading">
-              <h2 id="editor-title">
+        <Dialog labelledBy="editor-title" busy={busy} onClose={closeEditor}>
+          <div className="modal-heading">
+            <h2 id="editor-title">
+              {
                 {
-                  {
-                    user: editor.row ? "Cập nhật tài khoản" : "Cấp tài khoản",
-                    department: editor.row
-                      ? "Cập nhật phòng ban"
-                      : "Thêm phòng ban",
-                    room: editor.row ? "Cập nhật phòng họp" : "Thêm phòng họp",
-                    policy: "Thêm phiên bản cấu hình",
-                    reset: "Đặt lại mật khẩu tạm",
-                  }[editor.kind]
-                }
-              </h2>
-              <button
-                type="button"
-                className="text-button"
-                disabled={busy}
-                onClick={closeEditor}
-              >
-                Đóng ×
-              </button>
+                  user: editor.row ? "Cập nhật tài khoản" : "Cấp tài khoản",
+                  department: editor.row
+                    ? "Cập nhật phòng ban"
+                    : "Thêm phòng ban",
+                  room: editor.row ? "Cập nhật phòng họp" : "Thêm phòng họp",
+                  policy: "Thêm phiên bản cấu hình",
+                  reset: "Đặt lại mật khẩu tạm",
+                }[editor.kind]
+              }
+            </h2>
+            <button
+              type="button"
+              className="text-button"
+              disabled={busy}
+              onClick={closeEditor}
+            >
+              Đóng ×
+            </button>
+          </div>
+          {error && (
+            <div role="alert" className="error">
+              {error}
             </div>
-            {error && (
-              <div role="alert" className="error">
-                {error}
-              </div>
-            )}
-            <form onSubmit={save}>
-              <fieldset disabled={busy} className="plain-fieldset">
-                {editor.kind === "user" && (
-                  <>
-                    <div className="form-grid">
-                      <label>
-                        Mã nhân viên
-                        <input
-                          required
-                          maxLength={32}
-                          value={draft.employee_code}
-                          onChange={(e) =>
-                            patch({ employee_code: e.target.value })
-                          }
-                        />
-                      </label>
-                      <label>
-                        Họ tên
-                        <input
-                          required
-                          maxLength={150}
-                          value={draft.full_name}
-                          onChange={(e) => patch({ full_name: e.target.value })}
-                        />
-                      </label>
-                      <label>
-                        Email
-                        <input
-                          required
-                          type="email"
-                          value={draft.email}
-                          onChange={(e) => patch({ email: e.target.value })}
-                        />
-                      </label>
-                      <label>
-                        Phòng ban
-                        <select
-                          required
-                          value={draft.department_id}
-                          onChange={(e) =>
-                            patch({ department_id: e.target.value })
-                          }
-                        >
-                          <option value="">Chọn phòng ban</option>
-                          {departments
-                            .filter(
-                              (d) =>
-                                d.accepts_new_requests ||
-                                d.id === draft.department_id,
-                            )
-                            .map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      <label>
-                        Trạng thái
-                        <select
-                          value={draft.status}
-                          onChange={(e) => patch({ status: e.target.value })}
-                        >
-                          <option value="ACTIVE">Hoạt động</option>
-                          <option value="LOCKED">Đã khóa</option>
-                        </select>
-                      </label>
-                      {!editor.row && (
-                        <label>
-                          Mật khẩu tạm
-                          <input
-                            type="password"
-                            autoComplete="new-password"
-                            minLength={12}
-                            maxLength={128}
-                            required
-                            value={draft.temporary_password}
-                            onChange={(e) =>
-                              patch({ temporary_password: e.target.value })
-                            }
-                          />
-                        </label>
-                      )}
-                    </div>
-                    <fieldset>
-                      <legend>Nhóm quyền (chọn ít nhất một)</legend>
-                      {Object.entries(roles).map(([value, title]) => (
-                        <label className="check" key={value}>
-                          <input
-                            type="checkbox"
-                            checked={draft.roles.includes(value)}
-                            onChange={(e) =>
-                              patch({
-                                roles: e.target.checked
-                                  ? [...draft.roles, value]
-                                  : draft.roles.filter((r) => r !== value),
-                              })
-                            }
-                          />
-                          {title}
-                        </label>
-                      ))}
-                    </fieldset>
-                    <p className="info-line">
-                      Người phê duyệt cần được phân công thêm tại từng phòng
-                      họp/phòng ban. Đổi quyền, trạng thái, email hoặc phòng ban
-                      sẽ kết thúc các phiên đăng nhập của tài khoản này.
-                    </p>
-                  </>
-                )}
-                {["department", "room"].includes(editor.kind) && (
-                  <>
-                    <div className="form-grid">
-                      <label>
-                        Mã
-                        <input
-                          required
-                          maxLength={32}
-                          value={draft.code}
-                          onChange={(e) => patch({ code: e.target.value })}
-                        />
-                      </label>
-                      <label>
-                        Tên
-                        <input
-                          required
-                          maxLength={150}
-                          value={draft.name}
-                          onChange={(e) => patch({ name: e.target.value })}
-                        />
-                      </label>
-                      {editor.kind === "room" && (
-                        <label>
-                          Vị trí
-                          <input
-                            required
-                            maxLength={255}
-                            value={draft.location}
-                            onChange={(e) =>
-                              patch({ location: e.target.value })
-                            }
-                          />
-                        </label>
-                      )}
-                    </div>
-                    <label className="check">
-                      <input
-                        type="checkbox"
-                        checked={draft.accepts_new_requests}
-                        onChange={(e) =>
-                          patch({ accepts_new_requests: e.target.checked })
-                        }
-                      />
-                      Cho phép nhận yêu cầu mới
-                    </label>
-                    <p className="muted">
-                      Ngừng nhận mới vẫn giữ nguyên lịch đã được duyệt và dữ
-                      liệu lịch sử.
-                    </p>
-                  </>
-                )}
-                {editor.kind === "room" && (
-                  <>
-                    <EquipmentFields
-                      value={draft.equipment}
-                      onChange={(equipment) => patch({ equipment })}
-                    />
-                    {!editor.row && (
-                      <PolicyFields
-                        value={draft.initial_policy}
-                        onChange={(initial_policy) => patch({ initial_policy })}
-                      />
-                    )}
-                  </>
-                )}
-                {editor.kind === "policy" && (
-                  <>
-                    <div className="info-line">
-                      Cấu hình được lưu thành phiên bản mới. Hệ thống từ chối
-                      thay đổi làm lịch đã duyệt vượt sức chứa, ngoài giờ phục
-                      vụ hoặc chồng khoảng chuyển tiếp.
-                    </div>
-                    <PolicyFields value={draft} onChange={setDraft} />
-                  </>
-                )}
-                {editor.kind === "reset" && (
-                  <>
-                    <p>
-                      Đặt mật khẩu tạm cho <b>{editor.row.full_name}</b>. Người
-                      dùng phải đổi lại sau khi đăng nhập; các phiên hiện tại sẽ
-                      kết thúc.
-                    </p>
+          )}
+          <form onSubmit={save}>
+            <fieldset disabled={busy} className="plain-fieldset">
+              {editor.kind === "user" && (
+                <>
+                  <div className="form-grid">
                     <label>
-                      Mật khẩu tạm mới
+                      Mã nhân viên
                       <input
-                        type="password"
                         required
-                        minLength={12}
-                        maxLength={128}
-                        autoComplete="new-password"
-                        value={draft.new_temporary_password}
+                        maxLength={32}
+                        value={draft.employee_code}
                         onChange={(e) =>
-                          patch({ new_temporary_password: e.target.value })
+                          patch({ employee_code: e.target.value })
                         }
                       />
                     </label>
-                  </>
-                )}
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="secondary compact"
-                    onClick={closeEditor}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    className="compact"
-                    disabled={editor.kind === "user" && !draft.roles.length}
-                  >
-                    {busy ? "Đang lưu…" : "Lưu thay đổi"}
-                  </button>
-                </div>
-              </fieldset>
-            </form>
-          </section>
-        </div>
+                    <label>
+                      Họ tên
+                      <input
+                        required
+                        maxLength={150}
+                        value={draft.full_name}
+                        onChange={(e) => patch({ full_name: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Email
+                      <input
+                        required
+                        type="email"
+                        value={draft.email}
+                        onChange={(e) => patch({ email: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Phòng ban
+                      <select
+                        required
+                        value={draft.department_id}
+                        onChange={(e) =>
+                          patch({ department_id: e.target.value })
+                        }
+                      >
+                        <option value="">Chọn phòng ban</option>
+                        {departments
+                          .filter(
+                            (d) =>
+                              d.accepts_new_requests ||
+                              d.id === draft.department_id,
+                          )
+                          .map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <label>
+                      Trạng thái
+                      <select
+                        value={draft.status}
+                        onChange={(e) => patch({ status: e.target.value })}
+                      >
+                        <option value="ACTIVE">Hoạt động</option>
+                        <option value="LOCKED">Đã khóa</option>
+                      </select>
+                    </label>
+                    {!editor.row && (
+                      <label>
+                        Mật khẩu tạm
+                        <input
+                          type="password"
+                          autoComplete="new-password"
+                          minLength={12}
+                          maxLength={128}
+                          required
+                          value={draft.temporary_password}
+                          onChange={(e) =>
+                            patch({ temporary_password: e.target.value })
+                          }
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <fieldset>
+                    <legend>Nhóm quyền (chọn ít nhất một)</legend>
+                    {Object.entries(roles).map(([value, title]) => (
+                      <label className="check" key={value}>
+                        <input
+                          type="checkbox"
+                          checked={draft.roles.includes(value)}
+                          onChange={(e) =>
+                            patch({
+                              roles: e.target.checked
+                                ? [...draft.roles, value]
+                                : draft.roles.filter((r) => r !== value),
+                            })
+                          }
+                        />
+                        {title}
+                      </label>
+                    ))}
+                  </fieldset>
+                  <p className="info-line">
+                    Người phê duyệt cần được phân công thêm tại từng phòng
+                    họp/phòng ban. Đổi quyền, trạng thái, email hoặc phòng ban
+                    sẽ kết thúc các phiên đăng nhập của tài khoản này.
+                  </p>
+                </>
+              )}
+              {["department", "room"].includes(editor.kind) && (
+                <>
+                  <div className="form-grid">
+                    <label>
+                      Mã
+                      <input
+                        required
+                        maxLength={32}
+                        value={draft.code}
+                        onChange={(e) => patch({ code: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Tên
+                      <input
+                        required
+                        maxLength={150}
+                        value={draft.name}
+                        onChange={(e) => patch({ name: e.target.value })}
+                      />
+                    </label>
+                    {editor.kind === "room" && (
+                      <label>
+                        Vị trí
+                        <input
+                          required
+                          maxLength={255}
+                          value={draft.location}
+                          onChange={(e) => patch({ location: e.target.value })}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      checked={draft.accepts_new_requests}
+                      onChange={(e) =>
+                        patch({ accepts_new_requests: e.target.checked })
+                      }
+                    />
+                    Cho phép nhận yêu cầu mới
+                  </label>
+                  <p className="muted">
+                    Ngừng nhận mới vẫn giữ nguyên lịch đã được duyệt và dữ liệu
+                    lịch sử.
+                  </p>
+                </>
+              )}
+              {editor.kind === "room" && (
+                <>
+                  <EquipmentFields
+                    value={draft.equipment}
+                    onChange={(equipment) => patch({ equipment })}
+                  />
+                  {!editor.row && (
+                    <PolicyFields
+                      value={draft.initial_policy}
+                      onChange={(initial_policy) => patch({ initial_policy })}
+                    />
+                  )}
+                </>
+              )}
+              {editor.kind === "policy" && (
+                <>
+                  <div className="info-line">
+                    Cấu hình được lưu thành phiên bản mới. Hệ thống từ chối thay
+                    đổi làm lịch đã duyệt vượt sức chứa, ngoài giờ phục vụ hoặc
+                    chồng khoảng chuyển tiếp.
+                  </div>
+                  <PolicyFields value={draft} onChange={setDraft} />
+                </>
+              )}
+              {editor.kind === "reset" && (
+                <>
+                  <p>
+                    Đặt mật khẩu tạm cho <b>{editor.row.full_name}</b>. Người
+                    dùng phải đổi lại sau khi đăng nhập; các phiên hiện tại sẽ
+                    kết thúc.
+                  </p>
+                  <label>
+                    Mật khẩu tạm mới
+                    <input
+                      type="password"
+                      required
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="new-password"
+                      value={draft.new_temporary_password}
+                      onChange={(e) =>
+                        patch({ new_temporary_password: e.target.value })
+                      }
+                    />
+                  </label>
+                </>
+              )}
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="secondary compact"
+                  onClick={closeEditor}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="compact"
+                  disabled={editor.kind === "user" && !draft.roles.length}
+                >
+                  {busy ? "Đang lưu…" : "Lưu thay đổi"}
+                </button>
+              </div>
+            </fieldset>
+          </form>
+        </Dialog>
       )}
       {scope && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="scope-title"
-          >
-            <div className="modal-heading">
-              <h2 id="scope-title">Người duyệt · {scope.row.name}</h2>
+        <Dialog
+          labelledBy="scope-title"
+          busy={busy}
+          onClose={() => {
+            setScope(null);
+            setError("");
+          }}
+        >
+          <div className="modal-heading">
+            <h2 id="scope-title">Người duyệt · {scope.row.name}</h2>
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() => {
+                setScope(null);
+                setError("");
+              }}
+            >
+              Đóng ×
+            </button>
+          </div>
+          {error && (
+            <div role="alert" className="error">
+              {error}
+            </div>
+          )}
+          <p className="info-line">
+            Có {scope.value.pending_proposal_count} yêu cầu đang chờ trong phạm
+            vi này. Việc phân công sẽ áp dụng cho các lần xử lý tiếp theo.
+          </p>
+          <form onSubmit={saveScope}>
+            <fieldset disabled={busy}>
+              <legend>Tài khoản đủ điều kiện</legend>
+              {accounts
+                .filter(
+                  (u) => u.status === "ACTIVE" && u.roles.includes("APPROVER"),
+                )
+                .map((u) => (
+                  <label className="check" key={u.id}>
+                    <input
+                      type="checkbox"
+                      checked={scope.selected.includes(u.id)}
+                      onChange={(e) =>
+                        setScope({
+                          ...scope,
+                          selected: e.target.checked
+                            ? [...scope.selected, u.id]
+                            : scope.selected.filter((id) => id !== u.id),
+                        })
+                      }
+                    />
+                    {u.full_name} · {u.employee_code}
+                  </label>
+                ))}
+            </fieldset>
+            {!scope.selected.length && (
+              <p className="warning">
+                Không còn người duyệt được phân công. Các yêu cầu cần người
+                duyệt sẽ chưa thể được xử lý.
+              </p>
+            )}
+            <p className="muted">
+              Người gửi không được tự duyệt yêu cầu của mình. Nên phân công ít
+              nhất hai người để có người duyệt thay.
+            </p>
+            <div className="modal-footer">
               <button
-                className="text-button"
+                type="button"
+                className="secondary compact"
                 disabled={busy}
                 onClick={() => {
                   setScope(null);
                   setError("");
                 }}
               >
-                Đóng ×
+                Hủy
+              </button>
+              <button className="compact" disabled={busy}>
+                Lưu phân công
               </button>
             </div>
-            {error && (
-              <div role="alert" className="error">
-                {error}
-              </div>
-            )}
-            <p className="info-line">
-              Có {scope.value.pending_proposal_count} yêu cầu đang chờ trong
-              phạm vi này. Việc phân công sẽ áp dụng cho các lần xử lý tiếp
-              theo.
-            </p>
-            <form onSubmit={saveScope}>
-              <fieldset disabled={busy}>
-                <legend>Tài khoản đủ điều kiện</legend>
-                {accounts
-                  .filter(
-                    (u) =>
-                      u.status === "ACTIVE" && u.roles.includes("APPROVER"),
-                  )
-                  .map((u) => (
-                    <label className="check" key={u.id}>
-                      <input
-                        type="checkbox"
-                        checked={scope.selected.includes(u.id)}
-                        onChange={(e) =>
-                          setScope({
-                            ...scope,
-                            selected: e.target.checked
-                              ? [...scope.selected, u.id]
-                              : scope.selected.filter((id) => id !== u.id),
-                          })
-                        }
-                      />
-                      {u.full_name} · {u.employee_code}
-                    </label>
-                  ))}
-              </fieldset>
-              {!scope.selected.length && (
-                <p className="warning">
-                  Không còn người duyệt được phân công. Các yêu cầu cần người
-                  duyệt sẽ chưa thể được xử lý.
-                </p>
-              )}
-              <p className="muted">
-                Người gửi không được tự duyệt yêu cầu của mình. Nên phân công ít
-                nhất hai người để có người duyệt thay.
-              </p>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="secondary compact"
-                  disabled={busy}
-                  onClick={() => {
-                    setScope(null);
-                    setError("");
-                  }}
-                >
-                  Hủy
-                </button>
-                <button className="compact" disabled={busy}>
-                  Lưu phân công
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
+          </form>
+        </Dialog>
       )}
       {history && (
-        <div className="modal-backdrop">
-          <section
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Lịch sử cấu hình"
-          >
-            <div className="modal-heading">
-              <h2>Cấu hình · {history.room.name}</h2>
-              <button className="text-button" onClick={() => setHistory(null)}>
-                Đóng ×
-              </button>
-            </div>
-            {history.items.map((p) => (
-              <article className="policy-history" key={p.id}>
-                <h3>Từ {stamp(p.effective_from)}</h3>
-                <p>
-                  {p.capacity} người · Chuyển tiếp {p.buffer_minutes} phút
+        <Dialog label="Lịch sử cấu hình" onClose={() => setHistory(null)}>
+          <div className="modal-heading">
+            <h2>Cấu hình · {history.room.name}</h2>
+            <button className="text-button" onClick={() => setHistory(null)}>
+              Đóng ×
+            </button>
+          </div>
+          {history.items.map((p) => (
+            <article className="policy-history" key={p.id}>
+              <h3>Từ {stamp(p.effective_from)}</h3>
+              <p>
+                {p.capacity} người · Chuyển tiếp {p.buffer_minutes} phút
+              </p>
+              {weekdays.map((day, n) => (
+                <p key={day}>
+                  <b>{day}:</b>{" "}
+                  {p.weekly_windows
+                    .filter((w) => w.weekday === n + 1)
+                    .map((w) => `${w.start_time}–${w.end_time}`)
+                    .join(", ") || "Nghỉ"}
                 </p>
-                {weekdays.map((day, n) => (
-                  <p key={day}>
-                    <b>{day}:</b>{" "}
-                    {p.weekly_windows
-                      .filter((w) => w.weekday === n + 1)
-                      .map((w) => `${w.start_time}–${w.end_time}`)
-                      .join(", ") || "Nghỉ"}
-                  </p>
-                ))}
-                {p.calendar_days.map((d) => (
-                  <p key={d.local_date}>
-                    {d.local_date} · {d.reason} ·{" "}
-                    {d.is_closed
-                      ? "Nghỉ"
-                      : d.windows
-                          .map((w) => `${w.start_time}–${w.end_time}`)
-                          .join(", ")}
-                  </p>
-                ))}
-              </article>
-            ))}
-          </section>
-        </div>
+              ))}
+              {p.calendar_days.map((d) => (
+                <p key={d.local_date}>
+                  {d.local_date} · {d.reason} ·{" "}
+                  {d.is_closed
+                    ? "Nghỉ"
+                    : d.windows
+                        .map((w) => `${w.start_time}–${w.end_time}`)
+                        .join(", ")}
+                </p>
+              ))}
+            </article>
+          ))}
+        </Dialog>
       )}
     </div>
   );
@@ -1573,7 +1639,9 @@ export default function Workspace({ api, user, logout, changePassword }) {
 function Empty({ text }) {
   return (
     <div className="empty">
-      <span>▦</span>
+      <span className="empty-icon">
+        <Icon name="calendar" size={28} />
+      </span>
       <p>{text}</p>
     </div>
   );
@@ -1593,8 +1661,16 @@ function RoomCard({ room, requestedPolicy, children }) {
       <h3>{room.name}</h3>
       <p className="muted">{room.location}</p>
       <div className="room-specs">
-        <span>♙ {p ? p.capacity + " người" : "Chưa có cấu hình hiệu lực"}</span>
-        {p && <span>◷ Đệm {p.buffer_minutes} phút</span>}
+        <span>
+          <Icon name="users" size={17} />
+          {p ? p.capacity + " người" : "Chưa có cấu hình hiệu lực"}
+        </span>
+        {p && (
+          <span>
+            <Icon name="clock" size={17} />
+            Đệm {p.buffer_minutes} phút
+          </span>
+        )}
       </div>
       <div className="equipment-tags">
         {room.equipment.map((e) => (
