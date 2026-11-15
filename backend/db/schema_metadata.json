@@ -1,0 +1,2485 @@
+[
+  {
+    "name": "schema_migrations",
+    "description": "Ghi nhận phiên bản baseline SQL đã áp dụng",
+    "columns": [
+      {
+        "name": "version",
+        "type": "VARCHAR(32)",
+        "description": "Mã phiên bản",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "version"
+    ],
+    "checks": [],
+    "uniques": [],
+    "indexes": [],
+    "fks": []
+  },
+  {
+    "name": "departments",
+    "description": "Phòng ban; ngừng nhận yêu cầu mới không xóa lịch sử",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID phòng ban",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(32)",
+        "description": "Mã phòng ban duy nhất",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "description": "Tên phòng ban",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "accepts_new_requests",
+        "type": "BOOLEAN",
+        "description": "Cho phép yêu cầu công tác mới",
+        "nullable": false,
+        "default": "TRUE",
+        "extra": ""
+      },
+      {
+        "name": "row_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Phiên bản chống ghi đè",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "dept_bool",
+        "accepts_new_requests IN (0,1)"
+      ]
+    ],
+    "uniques": [
+      [
+        "code"
+      ]
+    ],
+    "indexes": [],
+    "fks": []
+  },
+  {
+    "name": "users",
+    "description": "Tài khoản nội bộ, đồng thời là dòng khóa tài nguyên người",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID tài khoản",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "employee_code",
+        "type": "VARCHAR(32)",
+        "description": "Mã nhân viên duy nhất",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "full_name",
+        "type": "VARCHAR(150)",
+        "description": "Họ tên",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(254) COLLATE utf8mb4_0900_as_ci",
+        "description": "Email duy nhất; Service chuẩn hóa trim và chữ thường",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "department_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng ban hiện tại",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "status",
+        "type": "ENUM('ACTIVE','LOCKED')",
+        "description": "Tình trạng tài khoản",
+        "nullable": false,
+        "default": "'LOCKED'",
+        "extra": ""
+      },
+      {
+        "name": "password_hash",
+        "type": "VARCHAR(255)",
+        "description": "Băm mật khẩu; không lưu mật khẩu gốc",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "must_change_password",
+        "type": "BOOLEAN",
+        "description": "Buộc đổi mật khẩu tạm",
+        "nullable": false,
+        "default": "TRUE",
+        "extra": ""
+      },
+      {
+        "name": "auth_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Tăng khi thu hồi toàn bộ phiên",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "row_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Phiên bản tài khoản",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "user_flags",
+        "must_change_password IN (0,1)"
+      ],
+      [
+        "user_active_hash",
+        "status <> 'ACTIVE' OR password_hash IS NOT NULL"
+      ]
+    ],
+    "uniques": [
+      [
+        "employee_code"
+      ],
+      [
+        "email"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "department_id"
+        ],
+        "departments",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "user_roles",
+    "description": "Một tài khoản kiêm nhiều nhóm quyền; không suy ra Nhân viên từ Admin",
+    "columns": [
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Tài khoản",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "role",
+        "type": "ENUM('EMPLOYEE','APPROVER','ADMIN')",
+        "description": "Nhóm quyền",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "granted_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Admin cấp quyền",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "user_id",
+      "role"
+    ],
+    "checks": [],
+    "uniques": [],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "granted_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "auth_sessions",
+    "description": "Phiên JWT có thể thu hồi; không lưu chuỗi JWT",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "sid trong JWT",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Chủ phiên",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "auth_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Phiên bản xác thực lúc cấp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "issued_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm cấp UTC",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "expires_at",
+        "type": "DATETIME(6)",
+        "description": "Hạn phiên UTC",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "revoked_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm thu hồi",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "session_range",
+        "issued_at < expires_at"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [
+      [
+        "user_id",
+        "revoked_at",
+        "expires_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "meeting_rooms",
+    "description": "Danh mục phòng; dòng phòng tồn tại được khóa trước kiểm tra xung đột",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID phòng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(32)",
+        "description": "Mã phòng duy nhất",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(150)",
+        "description": "Tên phòng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "location",
+        "type": "VARCHAR(255)",
+        "description": "Vị trí",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "accepts_new_requests",
+        "type": "BOOLEAN",
+        "description": "Ngừng nhận đặt mới không tự hủy lịch cũ",
+        "nullable": false,
+        "default": "TRUE",
+        "extra": ""
+      },
+      {
+        "name": "row_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Phiên bản danh mục",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "room_flag",
+        "accepts_new_requests IN (0,1)"
+      ]
+    ],
+    "uniques": [
+      [
+        "code"
+      ]
+    ],
+    "indexes": [],
+    "fks": []
+  },
+  {
+    "name": "room_equipment",
+    "description": "Thiết bị hiện có để lọc phòng",
+    "columns": [
+      {
+        "name": "room_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "equipment_code",
+        "type": "VARCHAR(40)",
+        "description": "Mã thiết bị",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "display_name",
+        "type": "VARCHAR(120)",
+        "description": "Tên thiết bị",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "quantity",
+        "type": "SMALLINT UNSIGNED",
+        "description": "Số lượng",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "room_id",
+      "equipment_code"
+    ],
+    "checks": [
+      [
+        "equipment_qty",
+        "quantity > 0"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "room_id"
+        ],
+        "meeting_rooms",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "room_approvers",
+    "description": "Phân công duyệt phòng có FK thật; không dùng scope_id đa nghĩa",
+    "columns": [
+      {
+        "name": "room_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng trong phạm vi",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người duyệt",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "description": "Phân công đang áp dụng",
+        "nullable": false,
+        "default": "TRUE",
+        "extra": ""
+      },
+      {
+        "name": "granted_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Admin phân công",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "room_id",
+      "user_id"
+    ],
+    "checks": [
+      [
+        "room_approver_flag",
+        "is_active IN (0,1)"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [
+      [
+        "user_id",
+        "is_active"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "room_id"
+        ],
+        "meeting_rooms",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "granted_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "department_approvers",
+    "description": "Phân công duyệt công tác theo phòng ban",
+    "columns": [
+      {
+        "name": "department_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng ban trong phạm vi",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người duyệt",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "description": "Phân công đang áp dụng",
+        "nullable": false,
+        "default": "TRUE",
+        "extra": ""
+      },
+      {
+        "name": "granted_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Admin phân công",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "department_id",
+      "user_id"
+    ],
+    "checks": [
+      [
+        "dept_approver_flag",
+        "is_active IN (0,1)"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [
+      [
+        "user_id",
+        "is_active"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "department_id"
+        ],
+        "departments",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "granted_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "room_policy_versions",
+    "description": "Lịch sử sức chứa, đệm và giờ phục vụ; Service chỉ thêm mốc hiệu lực hợp lệ",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID cấu hình",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "room_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "effective_from",
+        "type": "DATETIME(6)",
+        "description": "Mốc hiệu lực UTC; đến mốc kế tiếp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "capacity",
+        "type": "SMALLINT UNSIGNED",
+        "description": "Sức chứa tại mốc hiệu lực",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "buffer_minutes",
+        "type": "SMALLINT UNSIGNED",
+        "description": "Khoảng đệm sau họp",
+        "nullable": false,
+        "default": "15",
+        "extra": ""
+      },
+      {
+        "name": "created_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Admin thiết lập",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "policy_capacity",
+        "capacity > 0"
+      ]
+    ],
+    "uniques": [
+      [
+        "room_id",
+        "effective_from"
+      ],
+      [
+        "room_id",
+        "id"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "room_id"
+        ],
+        "meeting_rooms",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "created_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "room_weekly_windows",
+    "description": "Các khoảng phục vụ trong tuần của một phiên bản cấu hình",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID khoảng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "policy_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phiên bản cấu hình",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "weekday",
+        "type": "TINYINT UNSIGNED",
+        "description": "ISO thứ Hai=1 đến Chủ nhật=7",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "start_time",
+        "type": "TIME",
+        "description": "Bắt đầu theo giờ Việt Nam",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "end_time",
+        "type": "TIME",
+        "description": "Kết thúc cùng ngày theo giờ Việt Nam",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "weekly_day",
+        "weekday BETWEEN 1 AND 7"
+      ],
+      [
+        "weekly_range",
+        "start_time >= '00:00:00' AND end_time <= '24:00:00' AND start_time < end_time"
+      ]
+    ],
+    "uniques": [
+      [
+        "policy_id",
+        "weekday",
+        "start_time"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "policy_id"
+        ],
+        "room_policy_versions",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "room_calendar_days",
+    "description": "Ngoại lệ theo ngày: nghỉ hoặc thay toàn bộ các khoảng trong ngày",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID ngoại lệ",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "policy_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phiên bản cấu hình",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "local_date",
+        "type": "DATE",
+        "description": "Ngày Việt Nam",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "is_closed",
+        "type": "BOOLEAN",
+        "description": "1=nghỉ; 0=dùng các khoảng thay thế",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(255)",
+        "description": "Lý do ngoại lệ",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "calendar_flag",
+        "is_closed IN (0,1)"
+      ]
+    ],
+    "uniques": [
+      [
+        "policy_id",
+        "local_date"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "policy_id"
+        ],
+        "room_policy_versions",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "room_calendar_windows",
+    "description": "Khoảng phục vụ thay thế cho ngày ngoại lệ mở cửa",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID khoảng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "calendar_day_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Ngoại lệ ngày",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "start_time",
+        "type": "TIME",
+        "description": "Giờ mở Việt Nam",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "end_time",
+        "type": "TIME",
+        "description": "Giờ kết thúc cùng ngày",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "calendar_range",
+        "start_time >= '00:00:00' AND end_time <= '24:00:00' AND start_time < end_time"
+      ]
+    ],
+    "uniques": [
+      [
+        "calendar_day_id",
+        "start_time"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "calendar_day_id"
+        ],
+        "room_calendar_days",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "schedule_roots",
+    "description": "Định danh lịch; chỉ current_revision_id quyết định phiên bản hiệu lực",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID lịch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "kind",
+        "type": "ENUM('MEETING','WORK')",
+        "description": "Loại lịch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người tạo, có thể tổ chức thay",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "current_revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phiên bản đã duyệt hiện tại; NULL khi chưa có",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "row_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Token cạnh tranh trên lịch",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "cancelled_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm hủy",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "cancelled_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người thực hiện hủy",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "cancel_reason",
+        "type": "VARCHAR(1000)",
+        "description": "Lý do hủy",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "root_cancel",
+        "(cancelled_at IS NULL AND cancelled_by IS NULL AND cancel_reason IS NULL) OR (cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL AND cancel_reason IS NOT NULL AND CHAR_LENGTH(TRIM(cancel_reason)) > 0 AND current_revision_id IS NOT NULL)"
+      ]
+    ],
+    "uniques": [
+      [
+        "id",
+        "kind"
+      ]
+    ],
+    "indexes": [
+      [
+        "created_by",
+        "created_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "created_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "cancelled_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "schedule_revisions",
+    "description": "Nội dung bất biến; ánh xạ kế thừa ScheduleRevision bằng single-table inheritance",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID bản nội dung",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch gốc",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "kind",
+        "type": "ENUM('MEETING','WORK')",
+        "description": "Discriminator SQLAlchemy",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "revision_no",
+        "type": "INT UNSIGNED",
+        "description": "Số thứ tự bản trong lịch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "description": "Tiêu đề/mục đích ngắn",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "description": "Nội dung lịch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "starts_at",
+        "type": "DATETIME(6)",
+        "description": "Bắt đầu UTC, tính cả di chuyển cho công tác",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "ends_at",
+        "type": "DATETIME(6)",
+        "description": "Kết thúc UTC",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "room_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Chỉ lịch họp",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "chair_user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Chủ trì họp; phải là người tham gia bắt buộc",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "department_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phòng ban phụ trách công tác; giữ lịch sử",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "work_location",
+        "type": "VARCHAR(500)",
+        "description": "Địa điểm công tác",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "work_context",
+        "type": "ENUM('INTERNAL','EXTERNAL')",
+        "description": "Công tác trong/ngoài đơn vị",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người gửi bản nội dung",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "revision_no_positive",
+        "revision_no > 0"
+      ],
+      [
+        "revision_time",
+        "starts_at < ends_at"
+      ],
+      [
+        "revision_shape",
+        "(kind='MEETING' AND room_id IS NOT NULL AND chair_user_id IS NOT NULL AND department_id IS NULL AND work_location IS NULL AND work_context IS NULL) OR (kind='WORK' AND room_id IS NULL AND chair_user_id IS NULL AND department_id IS NOT NULL AND work_location IS NOT NULL AND work_context IS NOT NULL)"
+      ]
+    ],
+    "uniques": [
+      [
+        "schedule_id",
+        "revision_no"
+      ],
+      [
+        "schedule_id",
+        "id"
+      ]
+    ],
+    "indexes": [
+      [
+        "room_id",
+        "starts_at"
+      ],
+      [
+        "department_id",
+        "starts_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "schedule_id",
+          "kind"
+        ],
+        "schedule_roots",
+        [
+          "id",
+          "kind"
+        ]
+      ],
+      [
+        [
+          "room_id"
+        ],
+        "meeting_rooms",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "chair_user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "department_id"
+        ],
+        "departments",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "created_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "revision_participants",
+    "description": "Một người chỉ xuất hiện một lần trong mỗi bản lịch",
+    "columns": [
+      {
+        "name": "revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Bản nội dung",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người tham gia",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "is_required",
+        "type": "BOOLEAN",
+        "description": "Bắt buộc hoặc tùy chọn",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "revision_id",
+      "user_id"
+    ],
+    "checks": [
+      [
+        "participant_flag",
+        "is_required IN (0,1)"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [
+      [
+        "user_id",
+        "revision_id"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "revision_id"
+        ],
+        "schedule_revisions",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "approval_proposals",
+    "description": "Yêu cầu CREATE/CHANGE/CANCEL; pending_slot UNIQUE chặn hai đề nghị chờ",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID yêu cầu",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch gốc",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "kind",
+        "type": "ENUM('CREATE','CHANGE','CANCEL')",
+        "description": "Loại thao tác xin duyệt",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "submitted_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người gửi",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "base_revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Bản hiệu lực làm gốc, NULL với CREATE",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "candidate_revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Phương án mới, NULL với CANCEL",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "status",
+        "type": "ENUM('PENDING','APPROVED','REJECTED','WITHDRAWN','EXPIRED')",
+        "description": "Vòng đời yêu cầu",
+        "nullable": false,
+        "default": "'PENDING'",
+        "extra": ""
+      },
+      {
+        "name": "expires_at",
+        "type": "DATETIME(6)",
+        "description": "Mốc hết quyền xử lý theo DP-07",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "resolved_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người xử lý; có thể NULL khi hệ thống hết hiệu lực",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "resolved_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm kết thúc chờ",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "reason",
+        "type": "VARCHAR(1000)",
+        "description": "Lý do hủy/từ chối/rút/hết hiệu lực",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "row_version",
+        "type": "BIGINT UNSIGNED",
+        "description": "Phiên bản yêu cầu",
+        "nullable": false,
+        "default": "1",
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      },
+      {
+        "name": "pending_slot",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Cột sinh: chỉ có schedule_id khi PENDING",
+        "nullable": true,
+        "default": null,
+        "extra": "GENERATED ALWAYS AS (CASE WHEN status='PENDING' THEN schedule_id ELSE NULL END) STORED"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "proposal_shape",
+        "(kind='CREATE' AND base_revision_id IS NULL AND candidate_revision_id IS NOT NULL) OR (kind='CHANGE' AND base_revision_id IS NOT NULL AND candidate_revision_id IS NOT NULL AND base_revision_id <> candidate_revision_id) OR (kind='CANCEL' AND base_revision_id IS NOT NULL AND candidate_revision_id IS NULL)"
+      ],
+      [
+        "proposal_resolution",
+        "(status='PENDING' AND resolved_by IS NULL AND resolved_at IS NULL) OR (status IN ('APPROVED','REJECTED','WITHDRAWN') AND resolved_by IS NOT NULL AND resolved_at IS NOT NULL) OR (status='EXPIRED' AND resolved_at IS NOT NULL)"
+      ],
+      [
+        "proposal_no_self",
+        "status NOT IN ('APPROVED','REJECTED') OR resolved_by <> submitted_by"
+      ],
+      [
+        "proposal_withdraw",
+        "status <> 'WITHDRAWN' OR resolved_by = submitted_by"
+      ],
+      [
+        "proposal_reason",
+        "(kind <> 'CANCEL' AND status NOT IN ('REJECTED','EXPIRED')) OR (reason IS NOT NULL AND CHAR_LENGTH(TRIM(reason)) > 0)"
+      ]
+    ],
+    "uniques": [
+      [
+        "pending_slot"
+      ],
+      [
+        "schedule_id",
+        "id"
+      ]
+    ],
+    "indexes": [
+      [
+        "status",
+        "expires_at"
+      ],
+      [
+        "submitted_by",
+        "created_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "schedule_id"
+        ],
+        "schedule_roots",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "submitted_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "resolved_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id",
+          "base_revision_id"
+        ],
+        "schedule_revisions",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id",
+          "candidate_revision_id"
+        ],
+        "schedule_revisions",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "meeting_documents",
+    "description": "Định danh tài liệu theo cuộc họp; gỡ hiển thị có lý do",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID tài liệu",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch họp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "display_name",
+        "type": "VARCHAR(255)",
+        "description": "Tên hiển thị tài liệu",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "is_hidden",
+        "type": "BOOLEAN",
+        "description": "Gỡ hiển thị, vẫn giữ phiên bản",
+        "nullable": false,
+        "default": "FALSE",
+        "extra": ""
+      },
+      {
+        "name": "hidden_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người gỡ",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "hidden_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm gỡ",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "hide_reason",
+        "type": "VARCHAR(500)",
+        "description": "Lý do gỡ",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "document_visibility",
+        "(is_hidden=0 AND hidden_by IS NULL AND hidden_at IS NULL AND hide_reason IS NULL) OR (is_hidden=1 AND hidden_by IS NOT NULL AND hidden_at IS NOT NULL AND hide_reason IS NOT NULL AND CHAR_LENGTH(TRIM(hide_reason)) > 0)"
+      ]
+    ],
+    "uniques": [
+      [
+        "schedule_id",
+        "id"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "schedule_id"
+        ],
+        "schedule_roots",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "hidden_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "document_versions",
+    "description": "Mỗi tệp là một phiên bản gắn ngữ cảnh bản lịch để kiểm tra quyền lịch sử",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID phiên bản tệp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "document_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Tài liệu",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch; FK ghép bảo đảm cùng lịch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "context_revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Bản lịch làm ngữ cảnh phân quyền",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "version_no",
+        "type": "INT UNSIGNED",
+        "description": "Thứ tự phiên bản",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "original_filename",
+        "type": "VARCHAR(255)",
+        "description": "Tên tệp gốc đã làm sạch",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "extension",
+        "type": "ENUM('pdf','docx','pptx','xlsx','jpg','jpeg','png')",
+        "description": "Định dạng cho phép",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "mime_type",
+        "type": "VARCHAR(120)",
+        "description": "MIME được server kiểm tra",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "size_bytes",
+        "type": "INT UNSIGNED",
+        "description": "Dung lượng byte, tối đa 20 MiB",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "sha256",
+        "type": "CHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Băm nội dung",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "storage_key",
+        "type": "VARCHAR(255)",
+        "description": "Khóa tệp nội bộ, không phải URL công khai",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "uploaded_by",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người tải",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "file_size",
+        "size_bytes BETWEEN 1 AND 20971520"
+      ],
+      [
+        "file_version",
+        "version_no > 0"
+      ]
+    ],
+    "uniques": [
+      [
+        "document_id",
+        "version_no"
+      ],
+      [
+        "storage_key"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "schedule_id",
+          "document_id"
+        ],
+        "meeting_documents",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id",
+          "context_revision_id"
+        ],
+        "schedule_revisions",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ],
+      [
+        [
+          "uploaded_by"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "outbox_events",
+    "description": "Sự kiện email ghi cùng transaction nghiệp vụ; payload chỉ có ID và dữ liệu tối thiểu",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID sự kiện",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch liên quan",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "proposal_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Yêu cầu liên quan nếu có",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "event_type",
+        "type": "VARCHAR(64)",
+        "description": "Loại sự kiện nghiệp vụ",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "dedupe_key",
+        "type": "VARCHAR(150)",
+        "description": "Khóa duy nhất chống enqueue lặp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "payload",
+        "type": "JSON",
+        "description": "ID/ngữ cảnh tối thiểu, không token/mật khẩu/tệp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [],
+    "uniques": [
+      [
+        "dedupe_key"
+      ]
+    ],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "schedule_id"
+        ],
+        "schedule_roots",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id",
+          "proposal_id"
+        ],
+        "approval_proposals",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "email_deliveries",
+    "description": "Một người nhận một sự kiện; theo dõi và thử lại độc lập",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID lượt chuyển",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "event_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Sự kiện đã commit",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "recipient_user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người nhận; Worker kiểm tra quyền hiện hành",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "status",
+        "type": "ENUM('PENDING','PROCESSING','RETRY','SMTP_ACCEPTED','FAILED','SKIPPED')",
+        "description": "SMTP_ACCEPTED không đồng nghĩa đã vào Inbox",
+        "nullable": false,
+        "default": "'PENDING'",
+        "extra": ""
+      },
+      {
+        "name": "attempt_count",
+        "type": "TINYINT UNSIGNED",
+        "description": "Tổng lần bắt đầu thử gửi, tối đa 4",
+        "nullable": false,
+        "default": "0",
+        "extra": ""
+      },
+      {
+        "name": "next_attempt_at",
+        "type": "DATETIME(6)",
+        "description": "Mốc được phép thử tiếp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "first_failed_at",
+        "type": "DATETIME(6)",
+        "description": "Mốc thất bại đầu để tính +1/+5/+15 phút",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "lease_token",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Chủ lượt đang xử lý",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "lease_until",
+        "type": "DATETIME(6)",
+        "description": "Hạn lease Worker",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "last_error_code",
+        "type": "VARCHAR(80)",
+        "description": "Mã lỗi an toàn, không bí mật",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "smtp_accepted_at",
+        "type": "DATETIME(6)",
+        "description": "SMTP chấp nhận",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "delivery_attempts",
+        "attempt_count <= 4"
+      ],
+      [
+        "delivery_lease",
+        "(status='PROCESSING' AND lease_token IS NOT NULL AND lease_until IS NOT NULL) OR (status<>'PROCESSING' AND lease_token IS NULL AND lease_until IS NULL)"
+      ],
+      [
+        "delivery_accepted",
+        "(status='SMTP_ACCEPTED' AND smtp_accepted_at IS NOT NULL) OR (status<>'SMTP_ACCEPTED' AND smtp_accepted_at IS NULL)"
+      ]
+    ],
+    "uniques": [
+      [
+        "event_id",
+        "recipient_user_id"
+      ]
+    ],
+    "indexes": [
+      [
+        "status",
+        "next_attempt_at"
+      ],
+      [
+        "status",
+        "lease_until"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "event_id"
+        ],
+        "outbox_events",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "recipient_user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "email_attempts",
+    "description": "Lưu vết lần gửi; STARTED có thể UNKNOWN khi Worker chết sau SMTP",
+    "columns": [
+      {
+        "name": "delivery_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lượt chuyển",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "attempt_no",
+        "type": "TINYINT UNSIGNED",
+        "description": "Lần 1 đến 4",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "started_at",
+        "type": "DATETIME(6)",
+        "description": "Bắt đầu thử",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "finished_at",
+        "type": "DATETIME(6)",
+        "description": "Kết thúc hoặc xác nhận không rõ",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "outcome",
+        "type": "ENUM('STARTED','SMTP_ACCEPTED','ERROR','UNKNOWN')",
+        "description": "Kết quả lần thử",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "recipient_email",
+        "type": "VARCHAR(254)",
+        "description": "Địa chỉ thực tế đã dùng; không công khai",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "safe_error_code",
+        "type": "VARCHAR(80)",
+        "description": "Mã lỗi đã lược bí mật",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "delivery_id",
+      "attempt_no"
+    ],
+    "checks": [
+      [
+        "attempt_no",
+        "attempt_no BETWEEN 1 AND 4"
+      ],
+      [
+        "attempt_finish",
+        "(outcome='STARTED' AND finished_at IS NULL) OR (outcome<>'STARTED' AND finished_at IS NOT NULL)"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [],
+    "fks": [
+      [
+        [
+          "delivery_id"
+        ],
+        "email_deliveries",
+        [
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "audit_entries",
+    "description": "Lịch sử thao tác; không phải cơ chế phân quyền mặc định cho Admin",
+    "columns": [
+      {
+        "name": "id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "UUID nhật ký",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "actor_user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Người thao tác hoặc NULL cho hệ thống",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "action",
+        "type": "VARCHAR(80)",
+        "description": "Hành động",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "entity_type",
+        "type": "VARCHAR(50)",
+        "description": "Loại đối tượng",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "entity_id",
+        "type": "VARCHAR(36)",
+        "description": "ID tham chiếu mô tả, không FK đa hình",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch nếu liên quan",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "revision_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Bản lịch nếu liên quan",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "safe_metadata",
+        "type": "JSON",
+        "description": "Chỉ dữ liệu cho phép, không mật khẩu/JWT/SMTP secret",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "checks": [
+      [
+        "audit_revision_scope",
+        "revision_id IS NULL OR schedule_id IS NOT NULL"
+      ]
+    ],
+    "uniques": [],
+    "indexes": [
+      [
+        "schedule_id",
+        "created_at"
+      ],
+      [
+        "actor_user_id",
+        "created_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "actor_user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id"
+        ],
+        "schedule_roots",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "schedule_id",
+          "revision_id"
+        ],
+        "schedule_revisions",
+        [
+          "schedule_id",
+          "id"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "idempotency_keys",
+    "description": "Chống lặp cùng thao tác HTTP; lưu ID kết quả, không sao chép response riêng tư",
+    "columns": [
+      {
+        "name": "user_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Tài khoản gửi",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "operation",
+        "type": "VARCHAR(64)",
+        "description": "Tên thao tác",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "key_hash",
+        "type": "CHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Băm Idempotency-Key",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "request_hash",
+        "type": "CHAR(64) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Băm payload chuẩn hóa",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "result_schedule_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Lịch trả về nếu có",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "result_proposal_id",
+        "type": "CHAR(36) CHARACTER SET ascii COLLATE ascii_bin",
+        "description": "Yêu cầu trả về nếu có",
+        "nullable": true,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "response_status",
+        "type": "SMALLINT UNSIGNED",
+        "description": "HTTP status của kết quả đã commit",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "expires_at",
+        "type": "DATETIME(6)",
+        "description": "Hạn lưu chống lặp",
+        "nullable": false,
+        "default": null,
+        "extra": ""
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME(6)",
+        "description": "Thời điểm tạo UTC",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP(6)",
+        "extra": ""
+      }
+    ],
+    "pk": [
+      "user_id",
+      "operation",
+      "key_hash"
+    ],
+    "checks": [],
+    "uniques": [],
+    "indexes": [
+      [
+        "expires_at"
+      ]
+    ],
+    "fks": [
+      [
+        [
+          "user_id"
+        ],
+        "users",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "result_schedule_id"
+        ],
+        "schedule_roots",
+        [
+          "id"
+        ]
+      ],
+      [
+        [
+          "result_proposal_id"
+        ],
+        "approval_proposals",
+        [
+          "id"
+        ]
+      ]
+    ]
+  }
+]

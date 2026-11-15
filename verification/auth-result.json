@@ -1,0 +1,121 @@
+{
+  "passed": 28,
+  "total": 28,
+  "tests": [
+    {
+      "name": "Migration baseline và adoption chạy được trên MySQL",
+      "status": "PASS"
+    },
+    {
+      "name": "Health live",
+      "status": "PASS"
+    },
+    {
+      "name": "Không Bearer -> 401",
+      "status": "PASS"
+    },
+    {
+      "name": "Sai mật khẩu -> 401",
+      "status": "PASS"
+    },
+    {
+      "name": "Email không tồn tại cùng lỗi chung",
+      "status": "PASS"
+    },
+    {
+      "name": "Validation không lộ input mật khẩu",
+      "status": "PASS"
+    },
+    {
+      "name": "Login cấp JWT và cờ mật khẩu tạm",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin không tự có quyền Nhân viên",
+      "status": "PASS"
+    },
+    {
+      "name": "Me không trả hash/token",
+      "status": "PASS"
+    },
+    {
+      "name": "JWT giả bị từ chối",
+      "status": "PASS"
+    },
+    {
+      "name": "Response có request ID/no-store",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi mật khẩu sai xác nhận -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi mật khẩu sai hiện tại -> 422",
+      "status": "PASS"
+    },
+    {
+      "name": "Đổi mật khẩu tạm -> 204",
+      "status": "PASS"
+    },
+    {
+      "name": "Token cũ hết hiệu lực sau đổi mật khẩu",
+      "status": "PASS"
+    },
+    {
+      "name": "Mật khẩu cũ không đăng nhập được",
+      "status": "PASS"
+    },
+    {
+      "name": "Bỏ cờ mật khẩu tạm sau đổi",
+      "status": "PASS"
+    },
+    {
+      "name": "Logout -> 204 không body",
+      "status": "PASS"
+    },
+    {
+      "name": "Token logout không dùng lại được",
+      "status": "PASS"
+    },
+    {
+      "name": "Logout chỉ thu hồi đúng phiên",
+      "status": "PASS"
+    },
+    {
+      "name": "Khóa tài khoản vô hiệu token ngay ở server",
+      "status": "PASS"
+    },
+    {
+      "name": "Tài khoản khóa không login được",
+      "status": "PASS"
+    },
+    {
+      "name": "auth_version đổi vô hiệu token",
+      "status": "PASS"
+    },
+    {
+      "name": "JWT hết hạn bị chặn",
+      "status": "PASS"
+    },
+    {
+      "name": "Mật khẩu được băm Argon2, không plain text",
+      "status": "PASS"
+    },
+    {
+      "name": "Rate limit lần 11 trả 429 và Retry-After",
+      "status": "PASS"
+    },
+    {
+      "name": "API thật chỉ công bố 6 operation mốc A",
+      "status": "PASS"
+    },
+    {
+      "name": "Lưu audit của các thao tác tài khoản",
+      "status": "PASS"
+    }
+  ],
+  "mysql_version": "8.4.0",
+  "scope": "FastAPI ASGI + MySQL integration, not Docker/Windows/browser",
+  "frontend_build": "verified separately"
+}
