@@ -68,7 +68,7 @@ fs.mkdirSync(cache, { recursive: true });
 buildSync({
   stdin: {
     contents:
-      'export {Dialog,PasswordField,useSmallScreen} from "./ui.jsx"; export {default as Workspace} from "./workspace.jsx"; export {default as UsageReport} from "./reports.jsx";',
+      'export {Dialog,PasswordField,useSmallScreen} from "./ui.jsx"; export {default as App} from "./app.jsx"; export {default as Workspace} from "./workspace.jsx"; export {default as UsageReport} from "./reports.jsx";',
     resolveDir: path.resolve(__dirname, "../src"),
     sourcefile: "ui-test-entry.jsx",
   },
@@ -82,6 +82,7 @@ const {
   Dialog,
   PasswordField,
   useSmallScreen,
+  App,
   Workspace,
   UsageReport,
 } = require(path.join(cache, "components.cjs"));
@@ -300,6 +301,75 @@ async function workspaceApi(path) {
         ])
       : page([]);
 }
+
+test("Reload restores the web session and logout ends it", async (t) => {
+  let signedIn = false;
+  let logoutAvailable = false;
+  const fetch = t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.equal(options.headers["X-HTTT10-Web"], "1");
+    assert.equal(options.headers.Authorization, undefined);
+    const path = url.replace(/^\/api\/v1/, "");
+    if (path === "/auth/login") {
+      signedIn = true;
+      return Response.json({ expires_in: 28800 });
+    }
+    if (!signedIn) return Response.json({}, { status: 401 });
+    if (path === "/auth/me") return Response.json(account);
+    assert.equal(options.headers["X-HTTT10-User"], account.id);
+    if (path === "/auth/logout") {
+      if (!logoutAvailable) return Response.json({}, { status: 503 });
+      signedIn = false;
+      return new Response(null, { status: 204 });
+    }
+    return Response.json(await workspaceApi(path));
+  });
+
+  const initial = renderUI(h(App));
+  await screen.findByRole("heading", { name: "Đăng nhập" });
+  fireEvent.change(screen.getByLabelText("Email nội bộ"), {
+    target: { value: "nv01@example.com" },
+  });
+  fireEvent.change(screen.getByLabelText("Mật khẩu", { exact: true }), {
+    target: { value: "Example-Only-Test" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Đăng nhập" }));
+  await screen.findByText(account.full_name);
+
+  initial.unmount();
+  document.body.innerHTML = '<div id="root"></div>';
+  const reloaded = renderUI(h(App));
+  await screen.findByText(account.full_name);
+  assert.equal(
+    fetch.mock.calls.filter(({ arguments: [url] }) => url.endsWith("/auth/login")).length,
+    1,
+  );
+  await user().click(screen.getByRole("button", { name: "Đăng xuất" }));
+  await screen.findByText("Chưa đăng xuất được. Vui lòng thử lại.");
+  assert.ok(screen.getByText(account.full_name));
+
+  logoutAvailable = true;
+  await user().click(screen.getByRole("button", { name: "Đăng xuất" }));
+  await screen.findByText("Đã đăng xuất.");
+  reloaded.unmount();
+  document.body.innerHTML = '<div id="root"></div>';
+  renderUI(h(App));
+  await screen.findByRole("heading", { name: "Đăng nhập" });
+});
+
+test("A temporary session check failure can be retried", async (t) => {
+  let available = false;
+  t.mock.method(globalThis, "fetch", async (url) => {
+    if (url.endsWith("/auth/me"))
+      return available ? Response.json(account) : Response.json({}, { status: 503 });
+    return Response.json(page([]));
+  });
+  renderUI(h(App));
+  await screen.findByText("Không kiểm tra được phiên đăng nhập.");
+  assert.equal(screen.queryByRole("heading", { name: "Đăng nhập" }), null);
+  available = true;
+  await user().click(screen.getByRole("button", { name: "Thử lại" }));
+  await screen.findByText(account.full_name);
+});
 
 test("Mobile menu supports navigation, closes after choosing a page and unlocks content", async () => {
   width = 390;

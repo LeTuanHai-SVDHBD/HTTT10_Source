@@ -15,7 +15,8 @@ class AuthService:
             user=db.scalar(select(User).where(User.email==str(email).strip().lower()).with_for_update())
             valid=sec.verify(password,user.password_hash if user else None)
             if not user or not valid or user.status!='ACTIVE':raise Failure(401,'INVALID_CREDENTIALS','Email hoặc mật khẩu không đúng, hoặc tài khoản chưa hoạt động.')
-            session=AuthSession(id=str(uuid4()),user_id=user.id,auth_version=user.auth_version,issued_at=sec.now(),expires_at=sec.now()+timedelta(minutes=sec.TTL),revoked_at=None)
+            issued_at = sec.now()
+            session=AuthSession(id=str(uuid4()),user_id=user.id,auth_version=user.auth_version,issued_at=issued_at,expires_at=issued_at+timedelta(minutes=sec.TTL),revoked_at=None)
             db.add(session);audit(db,user.id,'LOGIN');db.flush()
             return {'access_token':sec.token(user,session),'token_type':'bearer','expires_in':sec.TTL*60,'must_change_password':user.must_change_password}
     def identity(self,raw):

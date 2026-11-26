@@ -733,7 +733,7 @@ export default function Workspace({ api, user, logout, changePassword }) {
             <Icon name="key" size={18} />
             <span>Đổi mật khẩu</span>
           </button>
-          <button className="nav" onClick={logout}>
+          <button className="nav" disabled={busy} onClick={() => run(logout)}>
             <Icon name="logout" size={18} />
             <span>Đăng xuất</span>
           </button>

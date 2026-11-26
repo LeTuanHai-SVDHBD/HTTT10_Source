@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError,IntegrityError,OperationalError
 from .db import engine
 from .services import Failure
 from .schemas import LoginInput,PasswordChange,TokenResponse,CurrentUser,HealthView
-from .dependencies import identity,service
+from .dependencies import identity,service,set_web_session
 from .catalog_routes import router as catalog_router
 from .scheduling_routes import router as scheduling_router
 from .document_routes import router as document_router
@@ -61,17 +61,25 @@ class LoginLimiter:
             while len(self.entries)>10000:self.entries.popitem(last=False)
 limiter=LoginLimiter()
 @app.post('/api/v1/auth/login',response_model=TokenResponse)
-def login(data:LoginInput,request:Request):
+def login(data: LoginInput, request: Request, response: Response):
     limiter.check(request.client.host if request.client else 'unknown')
-    return service.login(data.email,data.password.get_secret_value())
+    result = service.login(data.email, data.password.get_secret_value())
+    set_web_session(request, response, result['access_token'], result['expires_in'])
+    return result
 @app.get('/api/v1/auth/me',response_model=CurrentUser)
 def me(ctx=Depends(identity)):return ctx[0]
 @app.post('/api/v1/auth/logout',status_code=204)
-def logout(ctx=Depends(identity)):
-    service.logout(ctx[1]);return Response(status_code=204)
+def logout(request: Request, ctx=Depends(identity)):
+    service.logout(ctx[1])
+    response = Response(status_code=204)
+    set_web_session(request, response)
+    return response
 @app.put('/api/v1/auth/password',status_code=204)
-def password(data:PasswordChange,ctx=Depends(identity)):
-    service.password(ctx[1],data.current_password.get_secret_value(),data.new_password.get_secret_value());return Response(status_code=204)
+def password(data: PasswordChange, request: Request, ctx=Depends(identity)):
+    service.password(ctx[1], data.current_password.get_secret_value(), data.new_password.get_secret_value())
+    response = Response(status_code=204)
+    set_web_session(request, response)
+    return response
 @app.get('/api/v1/health/live',response_model=HealthView)
 def live():return {'status':'ok'}
 @app.get('/api/v1/health/ready',response_model=HealthView)

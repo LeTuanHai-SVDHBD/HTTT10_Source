@@ -101,7 +101,9 @@ Admin đầu tiên chỉ có quyền **Quản trị viên**, không tự có Nh�
 
 Phân công ở **Phòng họp → Người duyệt** và **Phòng ban → Người duyệt**. Cần vai trò Người phê duyệt **và** phạm vi; chỉ có vai trò chưa đủ. Nếu P1/P2 cũng tạo yêu cầu, cấp thêm Nhân viên và cần một người khác duyệt thay. Không tự duyệt/từ chối yêu cầu của mình.
 
-Dùng cửa sổ riêng tư hoặc trình duyệt khác cho người tạo/người duyệt. Token nằm trong bộ nhớ từng trang, có hạn 30 phút; F5/đăng xuất cần đăng nhập lại. Đổi mật khẩu thu hồi mọi phiên; đổi vai trò/trạng thái/email/phòng ban cũng thu hồi phiên. Chỉ đổi tên/mã nhân viên không thu hồi phiên. Admin không thể khóa hoặc gỡ quyền của Admin hoạt động cuối cùng.
+Dùng cửa sổ riêng tư hoặc trình duyệt khác cho người tạo/người duyệt trên cùng máy. Các tab cùng dùng một địa chỉ website sẽ dùng chung cookie phiên. F5 giữ đăng nhập khi phiên còn hợp lệ. Đăng xuất thu hồi phiên hiện tại. Đổi mật khẩu thu hồi mọi phiên. Đổi vai trò/trạng thái/email/phòng ban cũng thu hồi phiên. Chỉ đổi tên/mã nhân viên không thu hồi phiên. Admin không thể khóa hoặc gỡ quyền của Admin hoạt động cuối cùng.
+
+Thời hạn mặc định là 30 phút kể từ lúc đăng nhập. Khi test local hoặc LAN, thêm `ACCESS_TOKEN_MINUTES=480` vào `.env` trên máy chạy Compose để đặt phiên mới thành 8 giờ. Nếu stack đang chạy, dùng `docker compose up -d` để nạp cấu hình và `docker compose restart web` để Nginx kết nối lại với API. Đăng xuất và đăng nhập lại trên mỗi trình duyệt cần test. Giá trị hợp lệ từ 1 đến 1440 phút.
 
 Danh mục ban đầu có phòng ban HC/KT, phòng A101/B201. Giờ phục vụ: thứ Hai–thứ Sáu, 08:00–12:00 và 13:00–17:00, đệm 15 phút sau họp. Lịch còn trống sau cài mới là bình thường: cần gửi và duyệt yêu cầu để tạo lịch có hiệu lực.
 
@@ -145,7 +147,7 @@ Công tác cá nhân/nhóm dùng khoảng thời gian gồm di chuyển, địa 
 | Phòng hoặc hai người bắt buộc đã bận | Chặn gửi/duyệt xung đột |
 | Ít nhất một bên là người tùy chọn | Cảnh báo và cần xác nhận |
 
-Cảnh báo có token xác nhận 5 phút gắn đúng người/phương án/tập cảnh báo; không giữ chỗ. Một ý định gửi/duyệt/rút/sửa/hủy giữ nguyên `Idempotency-Key` khi retry; sau mất phản hồi, chọn **Thử lại cùng thao tác**. Không tự tạo lại với key mới khi chưa đối chiếu hồ sơ. Key có hạn 24 giờ. Tải lại trang/đăng xuất làm mất ý định trong bộ nhớ: đăng nhập và đọc hồ sơ trước khi tạo lại.
+Cảnh báo có token xác nhận 5 phút gắn đúng người/phương án/tập cảnh báo; không giữ chỗ. Một ý định gửi/duyệt/rút/sửa/hủy giữ nguyên `Idempotency-Key` khi retry; sau mất phản hồi, chọn **Thử lại cùng thao tác**. Không tự tạo lại với key mới khi chưa đối chiếu hồ sơ. Key có hạn 24 giờ. Tải lại trang hoặc đăng xuất làm mất ý định trong bộ nhớ. Mở hồ sơ để kiểm tra trước khi tạo lại.
 
 ### 4.4. Sửa và hủy lịch
 
@@ -389,7 +391,7 @@ Có 24 bảng nghiệp vụ và 3 view; Alembic thêm bảng kỹ thuật `alemb
 
 ### Nhóm API
 
-Tất cả dưới `/api/v1`. Swagger có 50 thao tác: 6 nền, 22 danh mục/quản trị, 15 lịch/yêu cầu, 6 tài liệu, 1 báo cáo. JWT dùng Authorization Bearer; không đưa vào URL. Login nhận JSON email/password; dùng Authorize trong Swagger với token vừa nhận, không chụp token thật.
+Tất cả dưới `/api/v1`. Swagger có 50 thao tác: 6 nền, 22 danh mục/quản trị, 15 lịch/yêu cầu, 6 tài liệu, 1 báo cáo. Giao diện web sử dụng cookie phiên HttpOnly cùng địa chỉ website. Swagger và các API client vẫn dùng JWT qua Authorization Bearer. Login nhận JSON email/password. Dùng Authorize trong Swagger với token vừa nhận và tránh chụp token thật.
 
 | Nhóm | Đường dẫn chính |
 |---|---|
@@ -431,7 +433,7 @@ Sao lưu đồng bộ **MySQL + volume document_data + cấu hình `.env`**. D�
 | `ModuleNotFoundError: pymysql` khi chạy test trên Windows | Dùng script Docker phần 7; nếu chạy Python thì cài requirements vào đúng venv trước |
 | pip yêu cầu `python.exe -m pip` | Dùng `py -m pip`/Python venv, không nâng pip bằng chính lệnh `pip` |
 | Đăng nhập cần đổi mật khẩu | Tài khoản mới/reset mật khẩu phải đổi mật khẩu tạm rồi đăng nhập lại |
-| 401 sau F5/đổi quyền/đổi mật khẩu | Token chỉ ở bộ nhớ; đăng nhập lại; kiểm tra khóa/phiên tại server |
+| 401 khi khôi phục phiên hoặc sau đổi quyền/đổi mật khẩu | Kiểm tra địa chỉ website, cookie trình duyệt và thời hạn phiên. Đăng nhập lại nếu phiên đã hết hạn hoặc bị thu hồi |
 | 429 khi thử đăng nhập nhiều | Tối đa 10 lượt/phút/IP trong một process; đợi ít nhất một phút, không thử liên tục |
 | Không thấy yêu cầu vừa duyệt | Đổi lọc từ Chờ duyệt sang Đã duyệt/Tất cả; calendar chọn đúng ngày/phòng/người |
 | Không thấy nút tạo/duyệt/báo cáo | Kiểm tra vai trò và phân công; Admin không tự nhận quyền nghiệp vụ |

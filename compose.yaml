@@ -26,7 +26,9 @@ services:
       db: {condition: service_healthy}
   api:
     build: ./backend
-    environment: *backend_env
+    environment:
+      <<: *backend_env
+      ACCESS_TOKEN_MINUTES: ${ACCESS_TOKEN_MINUTES:-30}
     volumes: ["document_data:/app/data/documents"]
     depends_on:
       migrate: {condition: service_completed_successfully}

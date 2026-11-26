@@ -1,12 +1,14 @@
-export function client(token, onExpired) {
+export function client({ userId, onExpired } = {}) {
   return async (path, method = "GET", body, options = {}) => {
     const response = await fetch("/api/v1" + path, {
       method,
+      credentials: "same-origin",
       headers: {
+        "X-HTTT10-Web": "1",
+        ...(userId ? { "X-HTTT10-User": userId } : {}),
         ...(body && !(body instanceof FormData)
           ? { "Content-Type": "application/json" }
           : {}),
-        ...(token ? { Authorization: "Bearer " + token } : {}),
         ...(options.key ? { "Idempotency-Key": options.key } : {}),
       },
       ...(body
@@ -20,7 +22,7 @@ export function client(token, onExpired) {
           ? await response.blob()
           : await response.json().catch(() => null);
     if (!response.ok) {
-      if (response.status === 401 && token) onExpired();
+      if (response.status === 401) onExpired?.();
       const fields = data?.error?.field_errors
         ?.map((f) => f.path.replace(/^body\./, ""))
         .join(", ");
